@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Panel principal</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Segoe UI,Arial;
+background:#f2f5f8;
+}
+
+.topbar{
+background:#0078c8;
+color:white;
+padding:15px 30px;
+font-weight:600;
+font-size:18px;
+box-shadow:0 2px 6px rgba(0,0,0,0.2);
+}
+
+.container{
+max-width:1000px;
+margin:40px auto;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:20px;
+}
+
+.app-btn{
+background:white;
+border-radius:6px;
+padding:40px;
+text-align:center;
+font-weight:600;
+cursor:pointer;
+box-shadow:0 4px 15px rgba(0,0,0,0.1);
+transition:0.2s;
+}
+
+.app-btn:hover{
+transform:translateY(-4px);
+box-shadow:0 6px 20px rgba(0,0,0,0.2);
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="topbar">
+Sistema Operativo Interno
+</div>
+
+<div class="container">
+
+<div class="app-btn" onclick="abrir('autosilo.html')">
+SILOMAR
+</div>
+
+<div class="app-btn" onclick="abrir('dialva.html')">
+C.DIALVA
+</div>
+
+<div class="app-btn">
+INLET
+</div>
+
+</div>
+
+<script>
+
+function abrir(pagina){
+window.location=pagina;
+}
+
+</script>
+
+</body>
+</html>
