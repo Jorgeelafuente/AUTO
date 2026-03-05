@@ -3,13 +3,13 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Panel principal</title>
+<title>Panel Principal</title>
 
 <style>
 
 body{
 margin:0;
-font-family:Segoe UI,Arial;
+font-family:"Segoe UI",Arial;
 background:#f2f5f8;
 }
 
@@ -17,33 +17,45 @@ background:#f2f5f8;
 background:#0078c8;
 color:white;
 padding:15px 30px;
+display:flex;
+justify-content:space-between;
+align-items:center;
 font-weight:600;
-font-size:18px;
 box-shadow:0 2px 6px rgba(0,0,0,0.2);
 }
 
-.container{
-max-width:1000px;
-margin:40px auto;
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-gap:20px;
+.logout{
+background:white;
+border:none;
+padding:8px 12px;
+border-radius:4px;
+cursor:pointer;
+font-weight:600;
 }
 
-.app-btn{
+.container{
+max-width:1100px;
+margin:40px auto;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:25px;
+padding:20px;
+}
+
+.app{
 background:white;
-border-radius:6px;
 padding:40px;
+border-radius:8px;
 text-align:center;
 font-weight:600;
 cursor:pointer;
-box-shadow:0 4px 15px rgba(0,0,0,0.1);
+box-shadow:0 5px 20px rgba(0,0,0,0.1);
 transition:0.2s;
 }
 
-.app-btn:hover{
-transform:translateY(-4px);
-box-shadow:0 6px 20px rgba(0,0,0,0.2);
+.app:hover{
+transform:translateY(-5px);
+box-shadow:0 8px 25px rgba(0,0,0,0.2);
 }
 
 </style>
@@ -53,20 +65,24 @@ box-shadow:0 6px 20px rgba(0,0,0,0.2);
 <body>
 
 <div class="topbar">
-Sistema Operativo Interno
+
+Sistema Operativo
+
+<button class="logout" onclick="logout()">Cerrar sesión</button>
+
 </div>
 
 <div class="container">
 
-<div class="app-btn" onclick="abrir('autosilo.html')">
+<div class="app" onclick="abrir('autosilo.html')">
 SILOMAR
 </div>
 
-<div class="app-btn" onclick="abrir('dialva.html')">
+<div class="app" onclick="abrir('dialva.html')">
 C.DIALVA
 </div>
 
-<div class="app-btn">
+<div class="app">
 INLET
 </div>
 
@@ -75,7 +91,15 @@ INLET
 <script>
 
 function abrir(pagina){
+
 window.location=pagina;
+
+}
+
+function logout(){
+
+window.location="index.html";
+
 }
 
 </script>
