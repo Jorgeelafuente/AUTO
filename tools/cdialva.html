@@ -1,1 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<title>C.DIALVA</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/string-similarity@4.0.4/umd/string-similarity.min.js"></script>
+
+<style>
+
+:root{
+--primary-blue:#0078c8;
+--primary-dark:#005a9e;
+--light-bg:#f2f5f8;
+--border-grey:#d9e1ea;
+}
+
+body{
+margin:0;
+font-family:"Segoe UI",Arial;
+background:var(--light-bg);
+color:#2b2b2b;
+}
+
+/* TOPBAR */
+
+.topbar{
+background:var(--primary-blue);
+color:#fff;
+padding:12px 30px;
+font-size:18px;
+font-weight:600;
+display:flex;
+justify-content:space-between;
+align-items:center;
+box-shadow:0 2px 6px rgba(0,0,0,.15);
+}
+
+.backBtn{
+background:white;
+border:none;
+padding:6px 14px;
+border-radius:4px;
+cursor:pointer;
+font-weight:600;
+}
+
+/* CONTENEDOR */
+
+.container{
+max-width:1100px;
+margin:30px auto;
+background:#fff;
+padding:25px;
+border-radius:6px;
+box-shadow:0 5px 20px rgba(0,0,0,.08);
+}
+
+h1{
+margin-top:0;
+color:var(--primary-dark);
+border-bottom:2px solid var(--primary-blue);
+padding-bottom:8px;
+}
+
+/* BOTONES */
+
+.btn{
+background:var(--primary-blue);
+border:none;
+padding:10px 16px;
+color:#fff;
+font-weight:600;
+border-radius:4px;
+cursor:pointer;
+font-size:14px;
+margin:10px;
+}
+
+.btn:hover{
+background:var(--primary-dark);
+}
+
+#procesarBtn{
+display:none;
+background:#28a745;
+}
+
+#procesarBtn:hover{
+background:#1e7e34;
+}
+
+/* INPUTS */
+
+input[type="file"]{
+display:none;
+}
+
+/* PANEL */
+
+.panel{
+background:#f9fbfd;
+border:1px solid var(--border-grey);
+padding:12px;
+border-radius:4px;
+margin-top:15px;
+text-align:left;
+max-height:260px;
+overflow:auto;
+}
+
+.panel strong{
+color:var(--primary-dark);
+}
+
+/* TABLA */
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+font-size:14px;
+}
+
+th{
+background:var(--primary-blue);
+color:#fff;
+padding:10px;
+text-align:left;
+}
+
+td{
+padding:8px;
+border-bottom:1px solid var(--border-grey);
+}
+
+tr.exact{background:#e6f4ea;}
+tr.fuzzy{background:#fff3cd;}
+tr.no-match{background:#f8d7da;}
+
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+C.DIALVA
+<button class="backBtn" onclick="window.location.href='../menu.html'">Volver</button>
+</div>
+
+<div class="container">
+
+<h1>Procesar Archivos</h1>
+
+<div>
+<input type="file" id="maestroInput" accept=".xlsx">
+<label for="maestroInput" class="btn">Subir archivo maestro</label>
+<div id="maestroName"></div>
+</div>
+
+<div>
+<input type="file" id="diarioInput" accept=".xlsx">
+<label for="diarioInput" class="btn">Subir archivo diario</label>
+<div id="diarioName"></div>
+</div>
+
+<button id="procesarBtn" class="btn">Procesar datos</button>
+
+<div class="panel">
+<strong>Datos extraídos del maestro</strong>
+<div id="vistaMaestro">Aún no cargado...</div>
+</div>
+
+<div class="panel">
+<strong>Datos extraídos del diario</strong>
+<div id="vistaDiario">Aún no cargado...</div>
+</div>
+
+<div id="tablaResultados"></div>
+
+</div>
+
+<script>
+
+/* === CÓDIGO ORIGINAL === */
+
+const maestroInput = document.getElementById('maestroInput');
+const diarioInput = document.getElementById('diarioInput');
+const procesarBtn = document.getElementById('procesarBtn');
+const maestroName = document.getElementById('maestroName');
+const diarioName = document.getElementById('diarioName');
+const vistaMaestro = document.getElementById('vistaMaestro');
+const vistaDiario = document.getElementById('vistaDiario');
+const tablaResultados = document.getElementById('tablaResultados');
+
+let maestroFile = null;
+let diarioFile = null;
+let datosMaestro = [];
+let datosDiario = [];
+
+maestroInput.addEventListener('change', async (e) => {
+
+maestroFile = e.target.files[0];
+maestroName.textContent = `Archivo cargado: ${maestroFile.name}`;
+
+datosMaestro = await leerExcelMaestro(maestroFile);
+
+vistaMaestro.innerHTML = datosMaestro.map(d =>
+`<div>• <b>${d.destinatario}</b> | ${d.direccion} | Tiers: ${d.tiers}</div>`
+).join("");
+
+comprobarArchivos();
+
+});
+
+diarioInput.addEventListener('change', async (e) => {
+
+diarioFile = e.target.files[0];
+diarioName.textContent = `Archivo cargado: ${diarioFile.name}`;
+
+datosDiario = await leerExcelDiario(diarioFile);
+
+vistaDiario.innerHTML = datosDiario.map(d =>
+`<div>• <b>${d.destinatario}</b><br>${d.direccion}<br><small>${d.observaciones}</small></div><hr>`
+).join("");
+
+comprobarArchivos();
+
+});
+
+function comprobarArchivos(){
+
+if(maestroFile && diarioFile){
+procesarBtn.style.display='inline-block';
+}
+
+}
+
+procesarBtn.addEventListener('click', () => {
+cruzarDatos(datosMaestro, datosDiario);
+});
+
+async function leerExcelMaestro(file){
+
+return new Promise((resolve)=>{
+
+const reader=new FileReader();
+
+reader.onload=(e)=>{
+
+const workbook=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+
+const sheet=XLSX.utils.sheet_to_json(
+workbook.Sheets[workbook.SheetNames[0]],
+{header:1}
+);
+
+resolve(
+sheet.slice(1)
+.filter(r=>r[0] && r[1])
+.map(r=>({
+destinatario:r[0].toString().trim(),
+direccion:r[1].toString().trim(),
+tiers:r[4]?.toString().trim() || ""
+}))
+);
+
+};
+
+reader.readAsArrayBuffer(file);
+
+});
+
+}
+
+async function leerExcelDiario(file){
+
+return new Promise((resolve)=>{
+
+const reader=new FileReader();
+
+reader.onload=(e)=>{
+
+const workbook=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+
+const sheet=XLSX.utils.sheet_to_json(
+workbook.Sheets[workbook.SheetNames[0]],
+{header:1}
+);
+
+const datos=[];
+
+let actual={
+destinatario:"",
+direccion:"",
+observaciones:""
+};
+
+sheet.forEach(row=>{
+
+if(!row[0] || !row[1]) return;
+
+const k=row[0]
+.toString()
+.normalize("NFD")
+.replace(/[\u0300-\u036f]/g,"")
+.toLowerCase();
+
+if(k.includes("destinatario")) actual.destinatario=row[1];
+
+if(k.includes("direccion")) actual.direccion=row[1];
+
+if(k.includes("observaciones")){
+
+actual.observaciones=row[1];
+
+datos.push({...actual});
+
+actual={destinatario:"",direccion:"",observaciones:""};
+
+}
+
+});
+
+resolve(datos);
+
+};
+
+reader.readAsArrayBuffer(file);
+
+});
+
+}
+
+function cruzarDatos(maestro,diario){
+
+let html=`<table>
+<thead>
+<tr>
+<th>Destinatario</th>
+<th>Dirección</th>
+<th>Observaciones</th>
+<th>Tiers</th>
+<th>Tipo</th>
+</tr>
+</thead>
+<tbody>`;
+
+diario.forEach(d=>{
+
+let tipo="no-match";
+let tiers="—";
+
+const exact=maestro.find(m=>
+m.destinatario.toLowerCase()===d.destinatario.toLowerCase() ||
+m.direccion.toLowerCase()===d.direccion.toLowerCase()
+);
+
+if(exact){
+
+tipo="exact";
+tiers=exact.tiers;
+
+}else{
+
+const best=stringSimilarity.findBestMatch(
+d.destinatario,
+maestro.map(m=>m.destinatario)
+);
+
+if(best.bestMatch.rating>0.6){
+
+tipo="fuzzy";
+
+tiers=maestro.find(
+m=>m.destinatario===best.bestMatch.target
+)?.tiers || "—";
+
+}
+
+}
+
+html+=`<tr class="${tipo}">
+<td>${d.destinatario}</td>
+<td>${d.direccion}</td>
+<td>${d.observaciones}</td>
+<td>${tiers}</td>
+<td>${tipo}</td>
+</tr>`;
+
+});
+
+tablaResultados.innerHTML=html+"</tbody></table>";
+
+}
+
+</script>
+
+</body>
+</html>
