@@ -6,177 +6,138 @@
 
 <title>C.DIALVA</title>
 
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/string-similarity@4.0.4/umd/string-similarity.min.js"></script>
 
 <style>
 
-:root{
---primary-blue:#0078c8;
---primary-dark:#005a9e;
---light-bg:#f2f5f8;
---border-grey:#d9e1ea;
-}
-
 body{
+font-family:Arial;
+background:#f4f6f9;
 margin:0;
-font-family:"Segoe UI",Arial;
-background:var(--light-bg);
-color:#2b2b2b;
 }
 
-/* TOPBAR */
-
-.topbar{
-background:var(--primary-blue);
-color:#fff;
-padding:12px 30px;
-font-size:18px;
-font-weight:600;
-display:flex;
-justify-content:space-between;
-align-items:center;
-box-shadow:0 2px 6px rgba(0,0,0,.15);
+.header{
+background:#005baa;
+color:white;
+padding:20px;
+font-size:22px;
+font-weight:bold;
 }
-
-.backBtn{
-background:white;
-border:none;
-padding:6px 14px;
-border-radius:4px;
-cursor:pointer;
-font-weight:600;
-}
-
-/* CONTENEDOR */
 
 .container{
 max-width:1100px;
-margin:30px auto;
-background:#fff;
-padding:25px;
-border-radius:6px;
-box-shadow:0 5px 20px rgba(0,0,0,.08);
+margin:auto;
+padding:30px;
 }
-
-h1{
-margin-top:0;
-color:var(--primary-dark);
-border-bottom:2px solid var(--primary-blue);
-padding-bottom:8px;
-}
-
-/* BOTONES */
 
 .btn{
-background:var(--primary-blue);
+background:#005baa;
+color:white;
 border:none;
-padding:10px 16px;
-color:#fff;
-font-weight:600;
-border-radius:4px;
+padding:12px 20px;
+border-radius:6px;
 cursor:pointer;
-font-size:14px;
-margin:10px;
+font-weight:bold;
 }
 
 .btn:hover{
-background:var(--primary-dark);
+background:#004080;
 }
 
-#procesarBtn{
-display:none;
-background:#28a745;
+.fileLabel{
+background:#e9eef5;
+padding:12px 20px;
+border-radius:6px;
+cursor:pointer;
+display:inline-block;
+margin-top:10px;
 }
 
-#procesarBtn:hover{
-background:#1e7e34;
-}
-
-/* INPUTS */
-
-input[type="file"]{
+input[type=file]{
 display:none;
 }
 
-/* PANEL */
+.status{
+margin-top:10px;
+margin-bottom:20px;
+color:#555;
+}
 
 .panel{
-background:#f9fbfd;
-border:1px solid var(--border-grey);
-padding:12px;
-border-radius:4px;
-margin-top:15px;
-text-align:left;
-max-height:260px;
-overflow:auto;
+background:white;
+border-radius:8px;
+padding:15px;
+margin-top:20px;
 }
-
-.panel strong{
-color:var(--primary-dark);
-}
-
-/* TABLA */
 
 table{
 width:100%;
 border-collapse:collapse;
 margin-top:20px;
-font-size:14px;
 }
 
 th{
-background:var(--primary-blue);
-color:#fff;
+background:#005baa;
+color:white;
 padding:10px;
-text-align:left;
 }
 
 td{
-padding:8px;
-border-bottom:1px solid var(--border-grey);
+padding:10px;
+border-bottom:1px solid #ddd;
 }
 
-tr.exact{background:#e6f4ea;}
-tr.fuzzy{background:#fff3cd;}
-tr.no-match{background:#f8d7da;}
+.exact{
+background:#d9f2e3;
+}
+
+.fuzzy{
+background:#fff2cc;
+}
+
+.no-match{
+background:#ffd6d6;
+}
 
 </style>
 </head>
 
 <body>
 
-<div class="topbar">
+<div class="header">
 C.DIALVA
-<button class="backBtn" onclick="window.location.href='../menu.html'">Volver</button>
 </div>
 
 <div class="container">
 
-<h1>Procesar Archivos</h1>
+<a href="../menu.html">
+<button class="btn">⬅ Volver al menú</button>
+</a>
 
-<div>
+<br><br>
+
+<label for="maestroInput" class="fileLabel">📘 Subir archivo maestro</label>
 <input type="file" id="maestroInput" accept=".xlsx">
-<label for="maestroInput" class="btn">Subir archivo maestro</label>
-<div id="maestroName"></div>
-</div>
 
-<div>
+<div id="maestroName" class="status"></div>
+
+<label for="diarioInput" class="fileLabel">📄 Subir archivo diario</label>
 <input type="file" id="diarioInput" accept=".xlsx">
-<label for="diarioInput" class="btn">Subir archivo diario</label>
-<div id="diarioName"></div>
-</div>
 
-<button id="procesarBtn" class="btn">Procesar datos</button>
+<div id="diarioName" class="status"></div>
 
-<div class="panel">
-<strong>Datos extraídos del maestro</strong>
-<div id="vistaMaestro">Aún no cargado...</div>
-</div>
+<button id="procesarBtn" class="btn" style="display:none;">⚙️ Procesar datos</button>
 
 <div class="panel">
-<strong>Datos extraídos del diario</strong>
-<div id="vistaDiario">Aún no cargado...</div>
+<h4>Datos archivo maestro</h4>
+<div id="vistaMaestro"></div>
+</div>
+
+<div class="panel">
+<h4>Datos archivo diario</h4>
+<div id="vistaDiario"></div>
 </div>
 
 <div id="tablaResultados"></div>
@@ -185,62 +146,64 @@ C.DIALVA
 
 <script>
 
-/* === CÓDIGO ORIGINAL === */
-
 const maestroInput = document.getElementById('maestroInput');
 const diarioInput = document.getElementById('diarioInput');
 const procesarBtn = document.getElementById('procesarBtn');
+
 const maestroName = document.getElementById('maestroName');
 const diarioName = document.getElementById('diarioName');
+
 const vistaMaestro = document.getElementById('vistaMaestro');
 const vistaDiario = document.getElementById('vistaDiario');
+
 const tablaResultados = document.getElementById('tablaResultados');
 
-let maestroFile = null;
-let diarioFile = null;
-let datosMaestro = [];
-let datosDiario = [];
+let maestroFile=null;
+let diarioFile=null;
 
-maestroInput.addEventListener('change', async (e) => {
+let datosMaestro=[];
+let datosDiario=[];
 
-maestroFile = e.target.files[0];
-maestroName.textContent = `Archivo cargado: ${maestroFile.name}`;
+maestroInput.addEventListener('change', async (e)=>{
 
-datosMaestro = await leerExcelMaestro(maestroFile);
+maestroFile=e.target.files[0];
 
-vistaMaestro.innerHTML = datosMaestro.map(d =>
-`<div>• <b>${d.destinatario}</b> | ${d.direccion} | Tiers: ${d.tiers}</div>`
+maestroName.textContent="Archivo cargado: "+maestroFile.name;
+
+datosMaestro=await leerExcelMaestro(maestroFile);
+
+vistaMaestro.innerHTML=datosMaestro.map(d=>
+`<div><b>${d.destinatario}</b> | ${d.direccion} | ${d.tiers}</div>`
 ).join("");
 
-comprobarArchivos();
+comprobar();
 
 });
 
-diarioInput.addEventListener('change', async (e) => {
+diarioInput.addEventListener('change', async (e)=>{
 
-diarioFile = e.target.files[0];
-diarioName.textContent = `Archivo cargado: ${diarioFile.name}`;
+diarioFile=e.target.files[0];
 
-datosDiario = await leerExcelDiario(diarioFile);
+diarioName.textContent="Archivo cargado: "+diarioFile.name;
 
-vistaDiario.innerHTML = datosDiario.map(d =>
-`<div>• <b>${d.destinatario}</b><br>${d.direccion}<br><small>${d.observaciones}</small></div><hr>`
+datosDiario=await leerExcelDiario(diarioFile);
+
+vistaDiario.innerHTML=datosDiario.map(d=>
+`<div><b>${d.destinatario}</b><br>${d.direccion}</div>`
 ).join("");
 
-comprobarArchivos();
+comprobar();
 
 });
 
-function comprobarArchivos(){
-
+function comprobar(){
 if(maestroFile && diarioFile){
-procesarBtn.style.display='inline-block';
+procesarBtn.style.display="inline-block";
+}
 }
 
-}
-
-procesarBtn.addEventListener('click', () => {
-cruzarDatos(datosMaestro, datosDiario);
+procesarBtn.addEventListener("click",()=>{
+cruzarDatos(datosMaestro,datosDiario);
 });
 
 async function leerExcelMaestro(file){
@@ -251,22 +214,17 @@ const reader=new FileReader();
 
 reader.onload=(e)=>{
 
-const workbook=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+const workbook=XLSX.read(new Uint8Array(e.target.result),{type:"array"});
 
-const sheet=XLSX.utils.sheet_to_json(
-workbook.Sheets[workbook.SheetNames[0]],
-{header:1}
-);
+const sheet=XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]],{header:1});
 
-resolve(
-sheet.slice(1)
-.filter(r=>r[0] && r[1])
-.map(r=>({
+resolve(sheet.slice(1).filter(r=>r[0]&&r[1]).map(r=>({
+
 destinatario:r[0].toString().trim(),
 direccion:r[1].toString().trim(),
 tiers:r[4]?.toString().trim() || ""
-}))
-);
+
+})));
 
 };
 
@@ -284,30 +242,19 @@ const reader=new FileReader();
 
 reader.onload=(e)=>{
 
-const workbook=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+const workbook=XLSX.read(new Uint8Array(e.target.result),{type:"array"});
 
-const sheet=XLSX.utils.sheet_to_json(
-workbook.Sheets[workbook.SheetNames[0]],
-{header:1}
-);
+const sheet=XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]],{header:1});
 
 const datos=[];
 
-let actual={
-destinatario:"",
-direccion:"",
-observaciones:""
-};
+let actual={destinatario:"",direccion:"",observaciones:""};
 
 sheet.forEach(row=>{
 
 if(!row[0] || !row[1]) return;
 
-const k=row[0]
-.toString()
-.normalize("NFD")
-.replace(/[\u0300-\u036f]/g,"")
-.toLowerCase();
+const k=row[0].toString().toLowerCase();
 
 if(k.includes("destinatario")) actual.destinatario=row[1];
 
@@ -337,49 +284,25 @@ reader.readAsArrayBuffer(file);
 
 function cruzarDatos(maestro,diario){
 
-let html=`<table>
-<thead>
-<tr>
-<th>Destinatario</th>
-<th>Dirección</th>
-<th>Observaciones</th>
-<th>Tiers</th>
-<th>Tipo</th>
-</tr>
-</thead>
-<tbody>`;
+let html="<table><tr><th>Destinatario</th><th>Dirección</th><th>Observaciones</th><th>Tiers</th></tr>";
 
 diario.forEach(d=>{
 
+let tiers="-";
+
 let tipo="no-match";
-let tiers="—";
 
 const exact=maestro.find(m=>
-m.destinatario.toLowerCase()===d.destinatario.toLowerCase() ||
-m.direccion.toLowerCase()===d.direccion.toLowerCase()
+
+m.destinatario.toLowerCase()===d.destinatario.toLowerCase()
+
 );
 
 if(exact){
 
-tipo="exact";
 tiers=exact.tiers;
 
-}else{
-
-const best=stringSimilarity.findBestMatch(
-d.destinatario,
-maestro.map(m=>m.destinatario)
-);
-
-if(best.bestMatch.rating>0.6){
-
-tipo="fuzzy";
-
-tiers=maestro.find(
-m=>m.destinatario===best.bestMatch.target
-)?.tiers || "—";
-
-}
+tipo="exact";
 
 }
 
@@ -388,12 +311,11 @@ html+=`<tr class="${tipo}">
 <td>${d.direccion}</td>
 <td>${d.observaciones}</td>
 <td>${tiers}</td>
-<td>${tipo}</td>
 </tr>`;
 
 });
 
-tablaResultados.innerHTML=html+"</tbody></table>";
+tablaResultados.innerHTML=html+"</table>";
 
 }
 
