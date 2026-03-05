@@ -1,135 +1,29 @@
 <!DOCTYPE html>
-
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Sistema Interno</title>
+<title>Acceso</title>
 
-<script src="config.js"></script>
-
-<style>
-
-body{
-margin:0;
-font-family:"Segoe UI",Arial;
-background:#f2f5f8;
-height:100vh;
-display:flex;
-align-items:center;
-justify-content:center;
-}
-
-/* TARJETA LOGIN */
-
-.login-card{
-width:350px;
-background:white;
-border-radius:8px;
-box-shadow:0 10px 25px rgba(0,0,0,0.15);
-overflow:hidden;
-}
-
-.login-header{
-background:#0078c8;
-color:white;
-padding:20px;
-font-size:18px;
-font-weight:600;
-text-align:center;
-}
-
-.login-body{
-padding:30px;
-}
-
-input{
-width:100%;
-padding:12px;
-margin-bottom:15px;
-border:1px solid #ccc;
-border-radius:4px;
-font-size:14px;
-}
-
-button{
-width:100%;
-padding:12px;
-background:#0078c8;
-color:white;
-border:none;
-border-radius:4px;
-font-weight:600;
-cursor:pointer;
-}
-
-button:hover{
-background:#005a9e;
-}
-
-#error{
-color:red;
-font-size:13px;
-margin-top:10px;
-text-align:center;
-}
-
-.footer{
-text-align:center;
-font-size:12px;
-color:#888;
-padding:15px;
-border-top:1px solid #eee;
-}
-
-</style>
+<link rel="stylesheet" href="assets/style.css">
 
 </head>
 
 <body>
 
-<div class="login-card">
+<div class="login-box">
 
-<div class="login-header">
-Sistema Operativo Interno
-</div>
+<h2>Acceso al sistema</h2>
 
-<div class="login-body">
+<input type="text" id="user" placeholder="Usuario">
+<input type="password" id="pass" placeholder="Contraseña">
 
-<input id="user" placeholder="Usuario">
-<input id="pass" type="password" placeholder="Contraseña">
+<button onclick="login()">Entrar</button>
 
-<button onclick="login()">Iniciar sesión</button>
-
-<div id="error"></div>
+<p id="error"></p>
 
 </div>
 
-<div class="footer">
-Acceso restringido
-</div>
-
-</div>
-
-<script>
-
-function login(){
-
-let u=document.getElementById("user").value;
-let p=document.getElementById("pass").value;
-
-if(u===auth.user && p===auth.pass){
-
-window.location="menu.html";
-
-}else{
-
-document.getElementById("error").innerText="Credenciales incorrectas";
-
-}
-
-}
-
-</script>
+<script src="assets/script.js"></script>
 
 </body>
 </html>
