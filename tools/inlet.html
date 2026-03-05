@@ -1,1 +1,408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INLET</title>
 
+<style>
+body{
+font-family:Arial, sans-serif;
+background:#f4f6f9;
+margin:0;
+}
+
+/* HEADER */
+.header{
+background:#005baa;
+color:white;
+padding:20px;
+font-size:22px;
+font-weight:bold;
+}
+
+/* CONTENEDOR */
+.container{
+padding:30px;
+max-width:1200px;
+margin:auto;
+}
+
+/* BOTONES */
+.btn{
+background:#005baa;
+color:white;
+border:none;
+padding:12px 20px;
+border-radius:6px;
+cursor:pointer;
+font-weight:bold;
+}
+
+.btn:hover{
+background:#004080;
+}
+
+input[type=file]{
+display:none;
+}
+
+.fileLabel{
+background:#e9eef5;
+padding:12px 20px;
+border-radius:6px;
+cursor:pointer;
+display:inline-block;
+margin-bottom:10px;
+}
+
+.status{
+margin-bottom:20px;
+color:#555;
+}
+
+/* TABLA */
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:30px;
+}
+
+th{
+background:#005baa;
+color:white;
+padding:10px;
+text-align:left;
+}
+
+td{
+padding:10px;
+border-bottom:1px solid #ddd;
+}
+
+.green{background:#d9f2e3;}
+.orange{background:#fff2cc;}
+.red{background:#ffd6d6;}
+
+.legend{
+margin-top:20px;
+}
+
+.legend span{
+padding:6px 10px;
+border-radius:6px;
+margin-right:10px;
+font-size:12px;
+font-weight:bold;
+}
+
+.chipGreen{background:#d9f2e3;}
+.chipOrange{background:#fff2cc;}
+.chipRed{background:#ffd6d6;}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+INLET
+</div>
+
+<div class="container">
+
+<h2>Procesar archivos XLSX</h2>
+
+<div>
+
+<label class="fileLabel" for="fileMaster">📁 Subir archivo maestro</label>
+<input id="fileMaster" type="file" accept=".xlsx">
+<div id="statusMaster" class="status">Aún no cargado</div>
+
+<label class="fileLabel" for="fileDaily">📥 Subir archivo diario</label>
+<input id="fileDaily" type="file" accept=".xlsx">
+<div id="statusDaily" class="status">Aún no cargado</div>
+
+<button id="processBtn" class="btn" style="display:none;">⚙️ Procesar datos</button>
+
+</div>
+
+<div id="resultsContainer"></div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<script>
+
+/* ELEMENTOS */
+
+const fileMaster = document.getElementById('fileMaster');
+const fileDaily = document.getElementById('fileDaily');
+const statusMaster = document.getElementById('statusMaster');
+const statusDaily = document.getElementById('statusDaily');
+const processBtn = document.getElementById('processBtn');
+const resultsContainer = document.getElementById('resultsContainer');
+
+let masterLoaded=false;
+let dailyLoaded=false;
+let masterFile=null;
+let dailyFile=null;
+
+function updateProcessVisibility(){
+processBtn.style.display=(masterLoaded && dailyLoaded) ? 'inline-block':'none';
+}
+
+fileMaster.addEventListener('change', e=>{
+const f=e.target.files[0];
+if(!f){
+masterLoaded=false;
+statusMaster.textContent='Aún no cargado';
+updateProcessVisibility();
+return;
+}
+
+masterLoaded=true;
+masterFile=f;
+statusMaster.textContent='Cargado: '+f.name;
+updateProcessVisibility();
+});
+
+fileDaily.addEventListener('change', e=>{
+const f=e.target.files[0];
+if(!f){
+dailyLoaded=false;
+statusDaily.textContent='Aún no cargado';
+updateProcessVisibility();
+return;
+}
+
+dailyLoaded=true;
+dailyFile=f;
+statusDaily.textContent='Cargado: '+f.name;
+updateProcessVisibility();
+});
+
+
+/* LEER XLSX */
+
+async function readXLSX(file){
+const data=await file.arrayBuffer();
+const workbook=XLSX.read(data,{type:'array'});
+const sheet=workbook.Sheets[workbook.SheetNames[0]];
+return XLSX.utils.sheet_to_json(sheet,{header:1});
+}
+
+
+/* NORMALIZAR TEXTO */
+
+function normalizeText(s){
+if(!s) return '';
+return String(s)
+.normalize('NFD')
+.replace(/[\u0300-\u036f]/g,'')
+.trim()
+.toLowerCase();
+}
+
+
+/* LEVENSHTEIN */
+
+function levenshtein(a,b){
+if(a===b) return 0;
+
+const matrix=[];
+
+for(let i=0;i<=b.length;i++){
+matrix[i]=[i];
+}
+
+for(let j=0;j<=a.length;j++){
+matrix[0][j]=j;
+}
+
+for(let i=1;i<=b.length;i++){
+for(let j=1;j<=a.length;j++){
+
+if(b.charAt(i-1)==a.charAt(j-1)){
+matrix[i][j]=matrix[i-1][j-1];
+}else{
+matrix[i][j]=Math.min(
+matrix[i-1][j-1]+1,
+matrix[i][j-1]+1,
+matrix[i-1][j]+1
+);
+}
+
+}
+}
+
+return matrix[b.length][a.length];
+}
+
+function similarity(a,b){
+const dist=levenshtein(normalizeText(a),normalizeText(b));
+const maxLen=Math.max(a.length,b.length);
+return maxLen===0?1:1-dist/maxLen;
+}
+
+
+/* MAPA MAESTRO */
+
+function buildMasterMap(rows){
+
+const map=new Map();
+
+for(const row of rows){
+
+if(!row || row.length<3) continue;
+
+const dest=row[0];
+const pob=row[1];
+const tiers=row[2];
+
+const key=normalizeText(dest)+'|'+normalizeText(pob);
+
+map.set(key,{tiers});
+
+}
+
+return map;
+}
+
+
+/* BUSQUEDA FUZZY */
+
+function findBestFuzzy(masterEntries,dest,pob){
+
+let bestScore=0;
+let best=null;
+
+for(const [key,val] of masterEntries){
+
+const [mdest,mpob]=key.split('|');
+
+const s1=similarity(dest,mdest);
+const s2=similarity(pob,mpob);
+
+const score=(s1+s2)/2;
+
+if(score>bestScore){
+bestScore=score;
+best={key,val};
+}
+
+}
+
+return {best,bestScore};
+
+}
+
+
+/* PROCESAR */
+
+processBtn.addEventListener('click', async ()=>{
+
+const [mRows,dRows]=await Promise.all([
+readXLSX(masterFile),
+readXLSX(dailyFile)
+]);
+
+const masterMap=buildMasterMap(mRows);
+
+const results=[];
+
+for(const row of dRows){
+
+if(!row || row.length<2) continue;
+
+const dest=row[0];
+const pob=row[1];
+const palets=row[2];
+const bultos=row[3];
+const peso=row[4];
+const fecha=row[5] || "-";
+
+const key=normalizeText(dest)+'|'+normalizeText(pob);
+
+let tiers='-';
+let type='none';
+
+if(masterMap.has(key)){
+
+tiers=masterMap.get(key).tiers;
+type='exact';
+
+}else{
+
+const {best,bestScore}=findBestFuzzy(masterMap.entries(),dest,pob);
+
+if(best && bestScore>=0.8){
+tiers=best.val.tiers;
+type='fuzzy';
+}
+
+}
+
+results.push({dest,pob,palets,bultos,peso,fecha,tiers,type});
+
+}
+
+renderTable(results);
+
+});
+
+
+/* RENDER TABLA */
+
+function renderTable(rows){
+
+let html=`<table>
+<thead>
+<tr>
+<th>Destinatario</th>
+<th>Población</th>
+<th>Palets</th>
+<th>Bultos</th>
+<th>Peso</th>
+<th>Fecha</th>
+<th>Tiers</th>
+</tr>
+</thead>
+<tbody>`;
+
+for(const r of rows){
+
+const color=
+r.type==='exact'?'green':
+r.type==='fuzzy'?'orange':'red';
+
+html+=`<tr class="${color}">
+<td>${r.dest}</td>
+<td>${r.pob}</td>
+<td>${r.palets}</td>
+<td>${r.bultos}</td>
+<td>${r.peso}</td>
+<td>${r.fecha}</td>
+<td>${r.tiers}</td>
+</tr>`;
+
+}
+
+html+=`</tbody></table>
+
+<div class="legend">
+<span class="chipGreen">EXACTA</span>
+<span class="chipOrange">FUZZY</span>
+<span class="chipRed">SIN COINCIDENCIA</span>
+</div>`;
+
+resultsContainer.innerHTML=html;
+
+}
+
+</script>
+
+</body>
+</html>
