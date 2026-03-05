@@ -1,196 +1,231 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>INLET</title>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
+:root{
+  --primary-blue:#0078c8;
+  --primary-dark:#005a9e;
+  --light-bg:#f2f5f8;
+  --border-grey:#d9e1ea;
+}
 
 body{
-font-family:Arial;
-background:#f4f6f9;
-margin:0;
+  margin:0;
+  font-family:"Segoe UI",Arial;
+  background:var(--light-bg);
+  color:#2b2b2b;
 }
 
-.header{
-background:#005baa;
-color:white;
-padding:20px;
-font-size:22px;
-font-weight:bold;
+/* BARRA SUPERIOR */
+.topbar{
+  background:var(--primary-blue);
+  color:#fff;
+  padding:12px 30px;
+  font-size:18px;
+  font-weight:600;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  box-shadow:0 2px 6px rgba(0,0,0,.15);
 }
 
+.backBtn{
+  background:#fff;
+  color:#0078c8;
+  border:none;
+  padding:6px 12px;
+  border-radius:4px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.backBtn:hover{
+  background:#f2f2f2;
+}
+
+/* CONTENEDOR */
 .container{
-max-width:1100px;
-margin:auto;
-padding:30px;
+  max-width:1200px;
+  margin:30px auto;
+  background:#fff;
+  padding:25px;
+  border-radius:6px;
+  box-shadow:0 5px 20px rgba(0,0,0,.08);
 }
 
-.btn{
-background:#005baa;
-color:white;
-border:none;
-padding:12px 20px;
-border-radius:6px;
-cursor:pointer;
-font-weight:bold;
+/* TITULO */
+h1{
+  margin-top:0;
+  color:var(--primary-dark);
+  border-bottom:2px solid var(--primary-blue);
+  padding-bottom:8px;
 }
 
-.btn:hover{
-background:#004080;
+/* CONTROLES */
+.controls{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:20px;
 }
 
-.fileLabel{
-background:#e9eef5;
-padding:12px 20px;
-border-radius:6px;
-cursor:pointer;
-display:inline-block;
-margin-top:10px;
+.button{
+  background:var(--primary-blue);
+  border:none;
+  padding:10px 16px;
+  color:#fff;
+  font-weight:600;
+  border-radius:4px;
+  cursor:pointer;
+  font-size:14px;
 }
 
-input[type=file]{
-display:none;
+.button:hover{
+  background:var(--primary-dark);
 }
 
-.status{
-margin-top:10px;
-margin-bottom:20px;
-color:#555;
+.filename{
+  font-size:13px;
+  color:#555;
+  align-self:center;
 }
 
+/* PANEL */
+.panel{
+  background:#f9fbfd;
+  border:1px solid var(--border-grey);
+  padding:12px;
+  border-radius:4px;
+  margin-top:15px;
+}
+
+.panel strong{
+  color:var(--primary-dark);
+}
+
+/* TABLA */
 table{
-width:100%;
-border-collapse:collapse;
-margin-top:30px;
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+  font-size:14px;
 }
 
 th{
-background:#005baa;
-color:white;
-padding:10px;
+  background:var(--primary-blue);
+  color:#fff;
+  padding:10px;
+  text-align:left;
 }
 
 td{
-padding:10px;
-border-bottom:1px solid #ddd;
+  padding:8px;
+  border-bottom:1px solid var(--border-grey);
 }
 
-.green{background:#d9f2e3;}
-.orange{background:#fff2cc;}
-.red{background:#ffd6d6;}
+.green{background:#e6f4ea;}
+.orange{background:#fff3cd;}
+.red{background:#f8d7da;}
+tr:hover{ background:#eef5fb; }
 
+input[type=file]{display:none;}
 </style>
-
 </head>
 
 <body>
 
-<div class="header">
-INLET
+<div class="topbar">
+  <div>INLET</div>
+  <button class="backBtn" onclick="window.location.href='../menu.html'">Volver</button>
 </div>
 
 <div class="container">
+<h1>INLET</h1>
 
-<a href="../menu.html">
-<button class="btn">⬅ Volver al menú</button>
-</a>
+<div class="controls">
+  <button class="button" id="btnMaster">📁 Subir archivo maestro</button>
+  <input type="file" id="fileMaster">
+  <div class="filename" id="statusMaster">Ningún archivo maestro</div>
 
-<br><br>
+  <button class="button" id="btnDaily">📄 Subir archivo diario</button>
+  <input type="file" id="fileDaily">
+  <div class="filename" id="statusDaily">Ningún archivo diario</div>
 
-<label class="fileLabel" for="fileMaster">📁 Subir archivo maestro</label>
-<input id="fileMaster" type="file">
+  <button class="button" id="processBtn" style="display:none;">⚙️ Procesar datos</button>
+</div>
 
-<div id="statusMaster" class="status"></div>
-
-<label class="fileLabel" for="fileDaily">📄 Subir archivo diario</label>
-<input id="fileDaily" type="file">
-
-<div id="statusDaily" class="status"></div>
-
-<button id="processBtn" class="btn" style="display:none;">⚙️ Procesar datos</button>
-
+<div class="panel">
+<strong>Resultados</strong>
 <div id="resultsContainer"></div>
+</div>
 
 </div>
 
 <script>
-
-const fileMaster=document.getElementById("fileMaster");
-const fileDaily=document.getElementById("fileDaily");
-
-const statusMaster=document.getElementById("statusMaster");
-const statusDaily=document.getElementById("statusDaily");
-
-const processBtn=document.getElementById("processBtn");
-const resultsContainer=document.getElementById("resultsContainer");
+const fileMaster=document.getElementById('fileMaster');
+const fileDaily=document.getElementById('fileDaily');
+const statusMaster=document.getElementById('statusMaster');
+const statusDaily=document.getElementById('statusDaily');
+const btnMaster=document.getElementById('btnMaster');
+const btnDaily=document.getElementById('btnDaily');
+const processBtn=document.getElementById('processBtn');
+const resultsContainer=document.getElementById('resultsContainer');
 
 let masterFile=null;
 let dailyFile=null;
 
-fileMaster.addEventListener("change",e=>{
-masterFile=e.target.files[0];
-statusMaster.textContent="Archivo cargado: "+masterFile.name;
-check();
-});
+btnMaster.onclick=()=>fileMaster.click();
+btnDaily.onclick=()=>fileDaily.click();
 
-fileDaily.addEventListener("change",e=>{
-dailyFile=e.target.files[0];
-statusDaily.textContent="Archivo cargado: "+dailyFile.name;
-check();
-});
+fileMaster.onchange=(e)=>{
+  masterFile=e.target.files[0];
+  statusMaster.innerText=masterFile.name;
+  checkFiles();
+};
 
-function check(){
-if(masterFile && dailyFile){
-processBtn.style.display="inline-block";
+fileDaily.onchange=(e)=>{
+  dailyFile=e.target.files[0];
+  statusDaily.innerText=dailyFile.name;
+  checkFiles();
+};
+
+function checkFiles(){
+  if(masterFile && dailyFile){
+    processBtn.style.display='inline-block';
+  }
 }
-}
 
-processBtn.addEventListener("click",async ()=>{
-
-const masterRows=await readXLSX(masterFile);
-const dailyRows=await readXLSX(dailyFile);
-
-render(dailyRows);
-
-});
+processBtn.onclick=async ()=>{
+  const masterRows=await readXLSX(masterFile);
+  const dailyRows=await readXLSX(dailyFile);
+  renderTable(dailyRows);
+};
 
 async function readXLSX(file){
-
-const data=await file.arrayBuffer();
-
-const workbook=XLSX.read(data,{type:"array"});
-
-const sheet=workbook.Sheets[workbook.SheetNames[0]];
-
-return XLSX.utils.sheet_to_json(sheet,{header:1});
-
+  const data=await file.arrayBuffer();
+  const workbook=XLSX.read(data,{type:"array"});
+  const sheet=workbook.Sheets[workbook.SheetNames[0]];
+  return XLSX.utils.sheet_to_json(sheet,{header:1});
 }
 
-function render(rows){
-
-let html="<table><tr><th>Destinatario</th><th>Población</th><th>Palets</th></tr>";
-
-rows.forEach(r=>{
-
-html+=`<tr>
-<td>${r[0]||""}</td>
-<td>${r[1]||""}</td>
-<td>${r[2]||""}</td>
-</tr>`;
-
-});
-
-resultsContainer.innerHTML=html+"</table>";
-
+function renderTable(rows){
+  let html="<table><thead><tr><th>Destinatario</th><th>Población</th><th>Palets</th></tr></thead><tbody>";
+  rows.forEach(r=>{
+    html+=`<tr>
+    <td>${r[0]||""}</td>
+    <td>${r[1]||""}</td>
+    <td>${r[2]||""}</td>
+    </tr>`;
+  });
+  html+="</tbody></table>";
+  resultsContainer.innerHTML=html;
 }
-
 </script>
 
 </body>
