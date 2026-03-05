@@ -1,300 +1,61 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Sistema Autosilo</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
+<meta charset="UTF-8">
+<title>Silomar</title>
 
-<style>
-:root{
-  --primary-blue:#0078c8;
-  --primary-dark:#005a9e;
-  --light-bg:#f2f5f8;
-  --border-grey:#d9e1ea;
-}
+<link rel="stylesheet" href="../assets/style.css">
 
-body{
-  margin:0;
-  font-family:"Segoe UI",Arial;
-  background:var(--light-bg);
-  color:#2b2b2b;
-}
-
-/* BARRA SUPERIOR */
-.topbar{
-  background:var(--primary-blue);
-  color:#fff;
-  padding:12px 30px;
-  font-size:18px;
-  font-weight:600;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  box-shadow:0 2px 6px rgba(0,0,0,.15);
-}
-
-.backBtn{
-  background:#fff;
-  color:#0078c8;
-  border:none;
-  padding:6px 12px;
-  border-radius:4px;
-  font-weight:600;
-  cursor:pointer;
-}
-
-.backBtn:hover{
-  background:#f2f2f2;
-}
-
-/* APP */
-.container{
-  max-width:1200px;
-  margin:30px auto;
-  background:#fff;
-  padding:25px;
-  border-radius:6px;
-  box-shadow:0 5px 20px rgba(0,0,0,.08);
-}
-
-h1{
-  margin-top:0;
-  color:var(--primary-dark);
-  border-bottom:2px solid var(--primary-blue);
-  padding-bottom:8px;
-}
-
-/* CONTROLES */
-.controls{
-  display:flex;
-  gap:12px;
-  flex-wrap:wrap;
-  margin-bottom:20px;
-}
-
-.button{
-  background:var(--primary-blue);
-  border:none;
-  padding:10px 16px;
-  color:#fff;
-  font-weight:600;
-  border-radius:4px;
-  cursor:pointer;
-  font-size:14px;
-}
-
-.button:hover{
-  background:var(--primary-dark);
-}
-
-.filename{
-  font-size:13px;
-  color:#555;
-  align-self:center;
-}
-
-#btnProcesar{
-  background:#28a745;
-}
-
-#btnProcesar:hover{
-  background:#1e7e34;
-}
-
-/* PANELES */
-.panel{
-  background:#f9fbfd;
-  border:1px solid var(--border-grey);
-  padding:12px;
-  border-radius:4px;
-  margin-top:15px;
-}
-
-.panel strong{
-  color:var(--primary-dark);
-}
-
-pre{
-  background:#fff;
-  border:1px solid var(--border-grey);
-  padding:10px;
-  border-radius:4px;
-  max-height:250px;
-  overflow:auto;
-  font-size:12px;
-}
-
-/* TABLA */
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:20px;
-  font-size:14px;
-}
-
-th{
-  background:var(--primary-blue);
-  color:#fff;
-  padding:10px;
-  text-align:left;
-}
-
-td{
-  padding:8px;
-  border-bottom:1px solid var(--border-grey);
-}
-
-tr.green{ background:#e6f4ea; }
-tr.orange{ background:#fff3cd; }
-tr.red{ background:#f8d7da; }
-tr:hover{ background:#eef5fb; }
-</style>
 </head>
 
 <body>
 
-<div class="topbar">
-  <div>Sistema Operativo Interno</div>
-  <button class="backBtn" onclick="window.location.href='../menu.html'">Volver</button>
-</div>
+<header>
+Procesar archivos Silomar
+</header>
 
 <div class="container">
-<h1>Entrelazar Archivos Maestro y Diario</h1>
 
-<div class="controls">
-  <button class="button" id="btnMaestro">Subir Maestro (.xlsx)</button>
-  <input type="file" id="fileMaestro" accept=".xlsx" style="display:none">
-  <div class="filename" id="nombreMaestro">Ningún archivo maestro</div>
+<div class="card">
 
-  <button class="button" id="btnDiario">Subir Diario (.pdf)</button>
-  <input type="file" id="fileDiario" accept=".pdf" style="display:none">
-  <div class="filename" id="nombreDiario">Ningún archivo diario</div>
+<input type="file" id="fileInput">
 
-  <button class="button" id="btnProcesar">Procesar Datos</button>
+<button onclick="procesar()">Procesar</button>
+
 </div>
 
-<div class="panel"><strong>Estado:</strong> <div id="log"></div></div>
-<div class="panel"><strong>Depuración PDF</strong><pre id="previewPDF"></pre></div>
-<div id="resultado"></div>
+<div class="card">
+
+<table id="tabla">
+
+<thead>
+<tr>
+<th>Cliente</th>
+<th>Producto</th>
+<th>Cantidad</th>
+</tr>
+</thead>
+
+<tbody>
+</tbody>
+
+</table>
+
 </div>
+
+</div>
+
+<script src="../assets/script.js"></script>
 
 <script>
-const fileMaestro=document.getElementById('fileMaestro');
-const fileDiario=document.getElementById('fileDiario');
-const nombreMaestro=document.getElementById('nombreMaestro');
-const nombreDiario=document.getElementById('nombreDiario');
-const btnMaestro=document.getElementById('btnMaestro');
-const btnDiario=document.getElementById('btnDiario');
-const btnProcesar=document.getElementById('btnProcesar');
-const log=document.getElementById('log');
-const previewPDF=document.getElementById('previewPDF');
-const resultado=document.getElementById('resultado');
-
-let maestroData=[], diarioFilas=[];
-const addLog=(m)=>log.innerText=m;
-
-btnMaestro.onclick=()=>fileMaestro.click();
-btnDiario.onclick=()=>fileDiario.click();
-
-fileMaestro.onchange=async(e)=>{
-  const file=e.target.files[0]; if(!file)return;
-  nombreMaestro.innerText=file.name;
-  const ab=await file.arrayBuffer();
-  const wb=XLSX.read(ab,{type:'array'});
-  const raw=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:""});
-  maestroData=raw.map(r=>{
-    const obj={};
-    for(const k in r){
-      const clean=k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g,"");
-      obj[clean]=r[k];
-    }
-    return{
-      destinatario:obj.destinatario||obj.nombre||"",
-      direccion:obj.direccion||obj.dirección||"",
-      codlocalidad:obj.codigopostalylocalidad||obj.cpylocalidad||"",
-      tiers:obj.tiers||""
-    };
-  });
-  addLog(`Excel maestro leído (${maestroData.length} filas)`);
-  if(diarioFilas.length)btnProcesar.style.display='inline-block';
-};
-
-fileDiario.onchange=async(e)=>{
-  const file=e.target.files[0]; if(!file)return;
-  nombreDiario.innerText=file.name;
-  diarioFilas=await extraerFilasPDF(file);
-  previewPDF.textContent="Filas detectadas:\n"+diarioFilas.map(f=>f.destinatario+" | "+f.cp+" | "+f.localidad).join("\n");
-  if(maestroData.length)btnProcesar.style.display='inline-block';
-};
-
-btnProcesar.onclick=()=>procesar();
-
-async function extraerFilasPDF(file){
-  pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
-  const data=new Uint8Array(await file.arrayBuffer());
-  const pdf=await pdfjsLib.getDocument({data}).promise;
-  let items=[];
-  for(let i=1;i<=pdf.numPages;i++){
-    const page=await pdf.getPage(i);
-    const content=await page.getTextContent();
-    items=items.concat(content.items.map(it=>({str:it.str,y:Math.floor(it.transform[5])})));
-  }
-  const lineas={};
-  items.forEach(it=>{
-    if(!lineas[it.y])lineas[it.y]=[];
-    lineas[it.y].push(it.str);
-  });
-  const filas=Object.keys(lineas).sort((a,b)=>b-a).map(y=>lineas[y].join(' ').trim()).filter(t=>t.length>0);
-  let start=filas.findIndex(l=>l.toUpperCase().includes("DESTINATARIO"));
-  let end=filas.findIndex(l=>l.toUpperCase().startsWith("TOTAL"));
-  if(start!==-1&&end!==-1)filas.splice(end);
-  if(start>0)filas.splice(0,start+1);
-  const regex=/([A-Z0-9&\.\s\-\/ÑÁÉÍÓÚÜÇ,]+)\s+(\d{4,5})\s*-\s*([A-Za-zÁÉÍÓÚÜñçÇ'\.\s\-]+)/;
-  const resultados=[];
-  filas.forEach(l=>{
-    const m=l.match(regex);
-    if(m)resultados.push({destinatario:m[1].trim(),cp:m[2].trim(),localidad:m[3].trim()});
-  });
-  return resultados;
-}
 
 function procesar(){
-  if(!maestroData.length||!diarioFilas.length){
-    addLog("Faltan archivos");
-    return;
-  }
-  const fuse=new Fuse(maestroData,{keys:['destinatario','direccion','codlocalidad'],threshold:0.35});
-  const resultados=diarioFilas.map(d=>{
-    const exact=maestroData.find(m=>
-      m.destinatario.toLowerCase().includes(d.destinatario.toLowerCase()) &&
-      m.codlocalidad.includes(d.cp)
-    );
-    if(exact)return{destinatario:d.destinatario,tiers:exact.tiers||'No encontrado',tipo:'exact'};
-    const fuzzy=fuse.search(d.destinatario);
-    if(fuzzy.length>0){
-      const top=fuzzy[0].item;
-      return{destinatario:d.destinatario,tiers:top.tiers||'No encontrado',tipo:'fuzzy'};
-    }
-    return{destinatario:d.destinatario,tiers:'No encontrado',tipo:'none'};
-  });
-  mostrarTabla(resultados);
-  addLog("Tabla generada correctamente");
+
+alert("Procesando archivo Silomar");
+
 }
 
-function mostrarTabla(datos){
-  let html='<table><thead><tr><th>Destinatario</th><th>Tiers</th></tr></thead><tbody>';
-  datos.forEach(r=>{
-    const c=r.tipo==='exact'?'green':r.tipo==='fuzzy'?'orange':'red';
-    html+=`<tr class="${c}"><td>${r.destinatario}</td><td>${r.tiers}</td></tr>`;
-  });
-  html+='</tbody></table>';
-  resultado.innerHTML=html;
-}
 </script>
 
 </body>
