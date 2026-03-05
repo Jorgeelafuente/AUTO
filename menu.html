@@ -1,108 +1,32 @@
 <!DOCTYPE html>
-
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Panel Principal</title>
+<title>Panel</title>
 
-<style>
-
-body{
-margin:0;
-font-family:"Segoe UI",Arial;
-background:#f2f5f8;
-}
-
-.topbar{
-background:#0078c8;
-color:white;
-padding:15px 30px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-font-weight:600;
-box-shadow:0 2px 6px rgba(0,0,0,0.2);
-}
-
-.logout{
-background:white;
-border:none;
-padding:8px 12px;
-border-radius:4px;
-cursor:pointer;
-font-weight:600;
-}
-
-.container{
-max-width:1100px;
-margin:40px auto;
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-gap:25px;
-padding:20px;
-}
-
-.app{
-background:white;
-padding:40px;
-border-radius:8px;
-text-align:center;
-font-weight:600;
-cursor:pointer;
-box-shadow:0 5px 20px rgba(0,0,0,0.1);
-transition:0.2s;
-}
-
-.app:hover{
-transform:translateY(-5px);
-box-shadow:0 8px 25px rgba(0,0,0,0.2);
-}
-
-</style>
+<link rel="stylesheet" href="assets/style.css">
 
 </head>
 
 <body>
 
-<div class="topbar">
+<div class="menu-container">
 
-Sistema Operativo
+<h1>Panel de herramientas</h1>
 
-<button class="logout" onclick="logout()">Cerrar sesión</button>
+<div class="buttons">
 
-</div>
+<button onclick="location.href='tools/silomar.html'">SILOMAR</button>
 
-<div class="container">
+<button onclick="location.href='tools/cdialva.html'">C.DIALVA</button>
 
-<div class="app" onclick="abrir('autosilo.html')">
-SILOMAR
-</div>
+<button onclick="location.href='tools/inlet.html'">INLET</button>
 
-<div class="app" onclick="abrir('dialva.html')">
-C.DIALVA
-</div>
-
-<div class="app">
-INLET
 </div>
 
 </div>
 
-<script>
-
-function abrir(pagina){
-
-window.location=pagina;
-
-}
-
-function logout(){
-
-window.location="index.html";
-
-}
-
-</script>
+<script src="assets/script.js"></script>
 
 </body>
 </html>
