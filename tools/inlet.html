@@ -6,13 +6,15 @@
 <title>INLET</title>
 
 <style>
+
 body{
-font-family:Arial, sans-serif;
+font-family: Arial, sans-serif;
 background:#f4f6f9;
 margin:0;
 }
 
 /* HEADER */
+
 .header{
 background:#005baa;
 color:white;
@@ -22,13 +24,15 @@ font-weight:bold;
 }
 
 /* CONTENEDOR */
+
 .container{
-padding:30px;
-max-width:1200px;
+max-width:1100px;
 margin:auto;
+padding:30px;
 }
 
-/* BOTONES */
+/* BOTONES PRINCIPALES */
+
 .btn{
 background:#005baa;
 color:white;
@@ -36,16 +40,16 @@ border:none;
 padding:12px 20px;
 border-radius:6px;
 cursor:pointer;
+font-size:14px;
 font-weight:bold;
+margin-top:10px;
 }
 
 .btn:hover{
 background:#004080;
 }
 
-input[type=file]{
-display:none;
-}
+/* BOTONES DE SUBIR ARCHIVO */
 
 .fileLabel{
 background:#e9eef5;
@@ -53,15 +57,23 @@ padding:12px 20px;
 border-radius:6px;
 cursor:pointer;
 display:inline-block;
-margin-bottom:10px;
+margin-top:10px;
 }
 
+input[type=file]{
+display:none;
+}
+
+/* ESTADO ARCHIVOS */
+
 .status{
-margin-bottom:20px;
+margin-top:8px;
+margin-bottom:15px;
 color:#555;
 }
 
-/* TABLA */
+/* TABLAS */
+
 table{
 width:100%;
 border-collapse:collapse;
@@ -80,9 +92,21 @@ padding:10px;
 border-bottom:1px solid #ddd;
 }
 
-.green{background:#d9f2e3;}
-.orange{background:#fff2cc;}
-.red{background:#ffd6d6;}
+/* COLORES RESULTADO */
+
+.green{
+background:#d9f2e3;
+}
+
+.orange{
+background:#fff2cc;
+}
+
+.red{
+background:#ffd6d6;
+}
+
+/* LEYENDA */
 
 .legend{
 margin-top:20px;
@@ -96,9 +120,17 @@ font-size:12px;
 font-weight:bold;
 }
 
-.chipGreen{background:#d9f2e3;}
-.chipOrange{background:#fff2cc;}
-.chipRed{background:#ffd6d6;}
+.chipGreen{
+background:#d9f2e3;
+}
+
+.chipOrange{
+background:#fff2cc;
+}
+
+.chipRed{
+background:#ffd6d6;
+}
 
 </style>
 </head>
