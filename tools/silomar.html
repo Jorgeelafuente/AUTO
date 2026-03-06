@@ -98,12 +98,9 @@ h1{
   align-self:center;
 }
 
+/* BOTON PROCESAR OCULTO AL INICIO */
 #btnProcesar{
-  background:#28a745;
-}
-
-#btnProcesar:hover{
-  background:#1e7e34;
+  display:none;
 }
 
 /* PANELES */
@@ -167,23 +164,26 @@ tr:hover{ background:#eef5fb; }
 <h1>SILOMAR</h1>
 
 <div class="controls">
-  <button class="button" id="btnMaestro">Subir Maestro (.xlsx)</button>
+  <button class="button" id="btnMaestro">Subir Archivo Maestro</button>
   <input type="file" id="fileMaestro" accept=".xlsx" style="display:none">
   <div class="filename" id="nombreMaestro">Ningún archivo maestro</div>
 
-  <button class="button" id="btnDiario">Subir Diario (.pdf)</button>
+  <button class="button" id="btnDiario">Subir Archivo Diario</button>
   <input type="file" id="fileDiario" accept=".pdf" style="display:none">
   <div class="filename" id="nombreDiario">Ningún archivo diario</div>
 
   <button class="button" id="btnProcesar">Procesar Datos</button>
 </div>
 
-<div class="panel"><strong>Estado:</strong> <div id="log"></div></div>
-<div class="panel"><strong>Depuración PDF</strong><pre id="previewPDF"></pre></div>
+<!-- OCULTOS PERO MANTENIDOS -->
+<div class="panel" style="display:none;"><strong>Estado:</strong> <div id="log"></div></div>
+<div class="panel" style="display:none;"><strong>Depuración PDF</strong><pre id="previewPDF"></pre></div>
+
 <div id="resultado"></div>
 </div>
 
 <script>
+
 const fileMaestro=document.getElementById('fileMaestro');
 const fileDiario=document.getElementById('fileDiario');
 const nombreMaestro=document.getElementById('nombreMaestro');
@@ -196,17 +196,35 @@ const previewPDF=document.getElementById('previewPDF');
 const resultado=document.getElementById('resultado');
 
 let maestroData=[], diarioFilas=[];
+let maestroCargado=false;
+let diarioCargado=false;
+
 const addLog=(m)=>log.innerText=m;
+
+function comprobarArchivos(){
+  if(maestroCargado && diarioCargado){
+    btnProcesar.style.display="inline-block";
+  }else{
+    btnProcesar.style.display="none";
+  }
+}
 
 btnMaestro.onclick=()=>fileMaestro.click();
 btnDiario.onclick=()=>fileDiario.click();
 
 fileMaestro.onchange=async(e)=>{
-  const file=e.target.files[0]; if(!file)return;
+  const file=e.target.files[0];
+  if(!file)return;
+
+  maestroCargado=true;
+  comprobarArchivos();
+
   nombreMaestro.innerText=file.name;
+
   const ab=await file.arrayBuffer();
   const wb=XLSX.read(ab,{type:'array'});
   const raw=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:""});
+
   maestroData=raw.map(r=>{
     const obj={};
     for(const k in r){
@@ -220,81 +238,142 @@ fileMaestro.onchange=async(e)=>{
       tiers:obj.tiers||""
     };
   });
+
   addLog(`Excel maestro leído (${maestroData.length} filas)`);
-  if(diarioFilas.length)btnProcesar.style.display='inline-block';
 };
 
 fileDiario.onchange=async(e)=>{
-  const file=e.target.files[0]; if(!file)return;
+  const file=e.target.files[0];
+  if(!file)return;
+
+  diarioCargado=true;
+  comprobarArchivos();
+
   nombreDiario.innerText=file.name;
+
   diarioFilas=await extraerFilasPDF(file);
+
   previewPDF.textContent="Filas detectadas:\n"+diarioFilas.map(f=>f.destinatario+" | "+f.cp+" | "+f.localidad).join("\n");
-  if(maestroData.length)btnProcesar.style.display='inline-block';
 };
 
 btnProcesar.onclick=()=>procesar();
 
 async function extraerFilasPDF(file){
+
   pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+
   const data=new Uint8Array(await file.arrayBuffer());
   const pdf=await pdfjsLib.getDocument({data}).promise;
+
   let items=[];
+
   for(let i=1;i<=pdf.numPages;i++){
     const page=await pdf.getPage(i);
     const content=await page.getTextContent();
     items=items.concat(content.items.map(it=>({str:it.str,y:Math.floor(it.transform[5])})));
   }
+
   const lineas={};
+
   items.forEach(it=>{
     if(!lineas[it.y])lineas[it.y]=[];
     lineas[it.y].push(it.str);
   });
-  const filas=Object.keys(lineas).sort((a,b)=>b-a).map(y=>lineas[y].join(' ').trim()).filter(t=>t.length>0);
+
+  const filas=Object.keys(lineas)
+    .sort((a,b)=>b-a)
+    .map(y=>lineas[y].join(' ').trim())
+    .filter(t=>t.length>0);
+
   let start=filas.findIndex(l=>l.toUpperCase().includes("DESTINATARIO"));
   let end=filas.findIndex(l=>l.toUpperCase().startsWith("TOTAL"));
-  if(start!==-1&&end!==-1)filas.splice(end);
+
+  if(start!==-1 && end!==-1)filas.splice(end);
   if(start>0)filas.splice(0,start+1);
+
   const regex=/([A-Z0-9&\.\s\-\/ÑÁÉÍÓÚÜÇ,]+)\s+(\d{4,5})\s*-\s*([A-Za-zÁÉÍÓÚÜñçÇ'\.\s\-]+)/;
+
   const resultados=[];
+
   filas.forEach(l=>{
     const m=l.match(regex);
-    if(m)resultados.push({destinatario:m[1].trim(),cp:m[2].trim(),localidad:m[3].trim()});
+    if(m){
+      resultados.push({
+        destinatario:m[1].trim(),
+        cp:m[2].trim(),
+        localidad:m[3].trim()
+      });
+    }
   });
+
   return resultados;
 }
 
 function procesar(){
-  if(!maestroData.length||!diarioFilas.length){
+
+  if(!maestroData.length || !diarioFilas.length){
     addLog("Faltan archivos");
     return;
   }
-  const fuse=new Fuse(maestroData,{keys:['destinatario','direccion','codlocalidad'],threshold:0.35});
+
+  const fuse=new Fuse(maestroData,{
+    keys:['destinatario','direccion','codlocalidad'],
+    threshold:0.35
+  });
+
   const resultados=diarioFilas.map(d=>{
+
     const exact=maestroData.find(m=>
       m.destinatario.toLowerCase().includes(d.destinatario.toLowerCase()) &&
       m.codlocalidad.includes(d.cp)
     );
-    if(exact)return{destinatario:d.destinatario,tiers:exact.tiers||'No encontrado',tipo:'exact'};
+
+    if(exact){
+      return{
+        destinatario:d.destinatario,
+        tiers:exact.tiers||'No encontrado',
+        tipo:'exact'
+      };
+    }
+
     const fuzzy=fuse.search(d.destinatario);
+
     if(fuzzy.length>0){
       const top=fuzzy[0].item;
-      return{destinatario:d.destinatario,tiers:top.tiers||'No encontrado',tipo:'fuzzy'};
+      return{
+        destinatario:d.destinatario,
+        tiers:top.tiers||'No encontrado',
+        tipo:'fuzzy'
+      };
     }
-    return{destinatario:d.destinatario,tiers:'No encontrado',tipo:'none'};
+
+    return{
+      destinatario:d.destinatario,
+      tiers:'No encontrado',
+      tipo:'none'
+    };
+
   });
+
   mostrarTabla(resultados);
+
   addLog("Tabla generada correctamente");
 }
 
 function mostrarTabla(datos){
+
   let html='<table><thead><tr><th>Destinatario</th><th>Tiers</th></tr></thead><tbody>';
+
   datos.forEach(r=>{
     const c=r.tipo==='exact'?'green':r.tipo==='fuzzy'?'orange':'red';
     html+=`<tr class="${c}"><td>${r.destinatario}</td><td>${r.tiers}</td></tr>`;
   });
+
   html+='</tbody></table>';
+
   resultado.innerHTML=html;
 }
+
 </script>
 
 </body>
