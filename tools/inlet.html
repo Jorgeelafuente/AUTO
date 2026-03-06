@@ -66,7 +66,6 @@ border-radius:6px;
 cursor:pointer;
 font-size:14px;
 font-weight:bold;
-margin-right:10px;
 }
 
 .btn:hover{
@@ -85,13 +84,13 @@ input[type=file]{
 display:none;
 }
 
-/* ARCHIVO CARGADO */
+/* ESTADO ARCHIVO */
 
 .fileStatus{
 font-size:13px;
 color:#555;
-margin-top:6px;
-margin-bottom:12px;
+align-self:center;
+margin-left:8px;
 }
 
 /* TABLA */
@@ -148,26 +147,26 @@ font-weight:bold;
 
 <h2>INLET</h2>
 
-<div style="display:flex; gap:30px; margin-top:20px; align-items:flex-start; flex-wrap:wrap;">
+<div style="display:flex; gap:30px; margin-top:20px; align-items:center; flex-wrap:wrap;">
 
-<div style="display:flex; flex-direction:column;">
+<div style="display:flex; align-items:center;">
 <label class="btn">
 Subir Archivo Maestro
 <input id="fileMaster" type="file" accept=".xlsx">
 </label>
-<div id="statusMaster" class="fileStatus"></div>
+<div id="statusMaster" class="fileStatus">Ningún archivo cargado</div>
 </div>
 
-<div style="display:flex; flex-direction:column;">
+<div style="display:flex; align-items:center;">
 <label class="btn">
 Subir Archivo Diario
 <input id="fileDaily" type="file" accept=".xlsx">
 </label>
-<div id="statusDaily" class="fileStatus"></div>
+<div id="statusDaily" class="fileStatus">Ningún archivo cargado</div>
 </div>
 
-<div style="display:flex; flex-direction:column;">
-<button id="processBtn" class="btn btnProcess" style="display:none;">
+<div>
+<button id="processBtn" class="btn processBtn" style="display:none;">
 Procesar Datos
 </button>
 </div>
@@ -209,7 +208,7 @@ const f=e.target.files[0];
 
 if(!f){
 masterLoaded=false;
-statusMaster.innerText="";
+statusMaster.innerText="Ningún archivo cargado";
 updateProcessVisibility();
 return;
 }
@@ -229,7 +228,7 @@ const f=e.target.files[0];
 
 if(!f){
 dailyLoaded=false;
-statusDaily.innerText="";
+statusDaily.innerText="Ningún archivo cargado";
 updateProcessVisibility();
 return;
 }
