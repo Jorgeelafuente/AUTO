@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Sistema Operativo Interno</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+
+body{
+  margin:0;
+  font-family: Arial, Helvetica, sans-serif;
+  background:#e9ecef;
+}
+
+/* CABECERA */
+
+.header{
+  background:#1677b7;
+  color:white;
+  padding:14px 25px;
+  font-size:20px;
+  font-weight:bold;
+}
+
+/* CONTENEDOR */
+
+.contenedor{
+  width:80%;
+  margin:40px auto;
+  background:white;
+  padding:30px;
+  border-radius:6px;
+  box-shadow:0 0 6px rgba(0,0,0,0.1);
+}
+
+/* TITULO */
+
+.titulo{
+  font-size:22px;
+  font-weight:bold;
+  color:#1677b7;
+  border-bottom:2px solid #1677b7;
+  padding-bottom:10px;
+  margin-bottom:25px;
+}
+
+/* BOTONES */
+
+.boton{
+  background:#1677b7;
+  color:white;
+  border:none;
+  padding:10px 16px;
+  border-radius:4px;
+  cursor:pointer;
+  font-weight:bold;
+  margin-right:10px;
+}
+
+.boton:hover{
+  background:#0f5f96;
+}
+
+/* INPUT FILE OCULTO */
+
+input[type=file]{
+  display:none;
+}
+
+/* TEXTO ESTADO ARCHIVO */
+
+.estadoArchivo{
+  margin-right:20px;
+  color:#555;
+}
+
+/* TABLA RESULTADOS */
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+}
+
+th,td{
+  border:1px solid #ccc;
+  padding:6px;
+  text-align:left;
+}
+
+th{
+  background:#1677b7;
+  color:white;
+}
+
+/* COLORES COMPARACION */
+
+tr.exacto{ background:#c8e6c9 }
+tr.fuzzy{ background:#ffe0b2 }
+tr.no{ background:#ffcdd2 }
+
+#debug{
+  margin-top:20px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+Sistema Operativo Interno
+</div>
+
+<div class="contenedor">
+
+<div class="titulo">Pasteleria Amparin</div>
+
+<div class="zonaBotones">
+
+<label class="boton">
+Subir Archivo Maestro
+<input type="file" id="excel" accept=".xlsx">
+</label>
+<span id="excelStatus" class="estadoArchivo">Ningún archivo cargado</span>
+
+<label class="boton">
+Subir Archivo Diario
+<input type="file" id="pdfs" accept=".pdf" multiple>
+</label>
+<span id="pdfStatus" class="estadoArchivo">Ningún archivo cargado</span>
+
+<button id="procesarBtn" class="boton" onclick="procesar()" style="display:none;">
+Procesar datos
+</button>
+
+</div>
+
+<div id="debug"></div>
+<div id="resultado"></div>
+
+</div>
+
+<script>
+
+let excelData = []
+
+/* ---------- MOSTRAR BOTON PROCESAR ---------- */
+
+function verificarArchivos(){
+
+  const excel = document.getElementById("excel").files.length
+  const pdfs = document.getElementById("pdfs").files.length
+
+  if(excel && pdfs){
+    document.getElementById("procesarBtn").style.display="inline-block"
+  }
+
+}
+
+/* ---------- ESTADO ARCHIVOS ---------- */
+
+document.getElementById("excel").addEventListener("change", e => {
+
+  const file = e.target.files[0]
+
+  if(file){
+    document.getElementById("excelStatus").innerText =
+      "Archivo cargado: " + file.name
+  }else{
+    document.getElementById("excelStatus").innerText =
+      "Ningún archivo cargado"
+  }
+
+  verificarArchivos()
+
+})
+
+document.getElementById("pdfs").addEventListener("change", e => {
+
+  const files = e.target.files
+
+  if(files.length === 1){
+    document.getElementById("pdfStatus").innerText =
+      "Archivo cargado: " + files[0].name
+  }
+
+  else if(files.length > 1){
+    document.getElementById("pdfStatus").innerText =
+      files.length + " archivos cargados"
+  }
+
+  else{
+    document.getElementById("pdfStatus").innerText =
+      "Ningún archivo cargado"
+  }
+
+  verificarArchivos()
+
+})
+
+/* ---------- EXCEL ---------- */
+
+document.getElementById("excel").addEventListener("change", e => {
+  const reader = new FileReader()
+  reader.onload = evt => {
+    const wb = XLSX.read(evt.target.result, { type: "binary" })
+    excelData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]])
+  }
+  reader.readAsBinaryString(e.target.files[0])
+})
+
+function debugExcel() {
+  document.getElementById("debug").innerHTML =
+    "<h3>EXCEL LEÍDO</h3><pre>" + JSON.stringify(excelData, null, 2) + "</pre>"
+}
+
+/* ---------- PDF ---------- */
+
+async function leerPDF(file) {
+  const buffer = await file.arrayBuffer()
+  const pdf = await pdfjsLib.getDocument({ data: buffer }).promise
+  let text = ""
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i)
+    const content = await page.getTextContent()
+    text += content.items.map(i => i.str).join(" ") + " "
+  }
+  return text.replace(/\s+/g, " ").trim()
+}
+
+function extraerDatosPDF(texto) {
+
+  let bloque = ""
+  if (texto.includes("Destino:")) {
+    bloque = texto.split("Destino:")[1]
+  } else if (texto.includes("REF;")) {
+    bloque = texto.split("REF;")[1]
+  }
+
+  bloque = bloque.split("Cantidad")[0].trim()
+
+  const cpMatch = bloque.match(/\d{5}/)
+  const cp = cpMatch ? cpMatch[0] : ""
+
+  let antesCP = cpMatch ? bloque.split(cp)[0].trim() : bloque
+
+  let partes = antesCP.split(" ")
+  let destino = ""
+  let direccion = ""
+
+  let idx = partes.findIndex(p =>
+    p.startsWith("C/") || p.startsWith("Calle") || p.startsWith("Av") || p.startsWith("Poligono") || p.startsWith("Polígono")
+  )
+
+  if (idx === -1) {
+    destino = antesCP
+  } else {
+    destino = partes.slice(0, idx).join(" ").trim()
+    direccion = partes.slice(idx).join(" ").trim()
+  }
+
+  const palets = texto.match(/Cantidad\s*:\s*(\d+)/i)?.[1] || ""
+
+  return { destino, direccion, cp, palets }
+}
+
+async function debugPDFs() {
+  const files = document.getElementById("pdfs").files
+  let out = ""
+  for (let f of files) {
+    const raw = await leerPDF(f)
+    const parsed = extraerDatosPDF(raw)
+    out += `<h4>${f.name}</h4><pre>${JSON.stringify(parsed, null, 2)}</pre>`
+  }
+  document.getElementById("debug").innerHTML = out
+}
+
+/* ---------- COMPARACIÓN ---------- */
+
+function normalizar(t) {
+  return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+}
+
+function fuzzy(a, b) {
+  a = normalizar(a)
+  b = normalizar(b)
+  let ok = 0
+  a.split(" ").forEach(w => { if (b.includes(w)) ok++ })
+  return ok / a.split(" ").length
+}
+
+async function procesar() {
+
+  const files = document.getElementById("pdfs").files
+  let rows = ""
+
+  for (let f of files) {
+
+    const texto = await leerPDF(f)
+    const d = extraerDatosPDF(texto)
+
+    let estado = "no"
+    let tiers = ""
+
+    let exacto = excelData.find(e =>
+      normalizar(e.DESTINATARIO) === normalizar(d.destino)
+    )
+
+    if (exacto) {
+      estado = "exacto"
+      tiers = exacto.TIERS
+    } else {
+
+      let mejor = { score: 0 }
+
+      excelData.forEach(e => {
+        const s = fuzzy(d.destino, e.DESTINATARIO)
+        if (s > mejor.score) mejor = { score: s, e }
+      })
+
+      if (mejor.score > 0.5) {
+        estado = "fuzzy"
+        tiers = mejor.e.TIERS
+      }
+
+    }
+
+    rows += `
+      <tr class="${estado}">
+        <td>${d.destino}</td>
+        <td>${d.direccion}</td>
+        <td>${d.cp}</td>
+        <td>${d.palets}</td>
+        <td>${tiers}</td>
+      </tr>`
+  }
+
+  document.getElementById("resultado").innerHTML = `
+    <table>
+      <tr>
+        <th>Destino</th>
+        <th>Dirección</th>
+        <th>CP</th>
+        <th>Palets</th>
+        <th>Tiers</th>
+      </tr>
+      ${rows}
+    </table>`
+}
+
+</script>
+
+</body>
+</html>
+```
