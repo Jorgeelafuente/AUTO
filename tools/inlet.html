@@ -148,23 +148,31 @@ font-weight:bold;
 
 <h2>INLET</h2>
 
+<div style="display:flex; gap:30px; margin-top:20px; align-items:flex-start; flex-wrap:wrap;">
+
+<div style="display:flex; flex-direction:column;">
 <label class="btn">
 Subir Archivo Maestro
 <input id="fileMaster" type="file" accept=".xlsx">
 </label>
-
 <div id="statusMaster" class="fileStatus"></div>
+</div>
 
+<div style="display:flex; flex-direction:column;">
 <label class="btn">
 Subir Archivo Diario
 <input id="fileDaily" type="file" accept=".xlsx">
 </label>
-
 <div id="statusDaily" class="fileStatus"></div>
+</div>
 
-<button id="processBtn" class="btn processBtn" style="display:none;">
+<div style="display:flex; flex-direction:column;">
+<button id="processBtn" class="btn btnProcess" style="display:none;">
 Procesar Datos
 </button>
+</div>
+
+</div>
 
 <div id="resultsContainer"></div>
 
