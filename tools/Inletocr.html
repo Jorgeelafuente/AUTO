@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INLET OCR</title>
+
+<style>
+body{font-family:Arial;background:#f4f6f9;margin:0;}
+
+.header{
+background:#005baa;
+color:white;
+padding:18px 25px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+font-weight:bold;
+font-size:20px;
+}
+
+.backBtn{
+background:white;
+color:#005baa;
+border:none;
+padding:8px 14px;
+border-radius:6px;
+cursor:pointer;
+font-weight:bold;
+}
+
+.container{
+max-width:1100px;
+margin:40px auto;
+background:white;
+padding:30px;
+border-radius:8px;
+box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+
+h2{
+color:#005baa;
+border-bottom:2px solid #005baa;
+padding-bottom:8px;
+}
+
+.btn{
+background:#005baa;
+color:white;
+border:none;
+padding:12px 20px;
+border-radius:6px;
+cursor:pointer;
+font-weight:bold;
+}
+
+input[type=file]{display:none;}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+}
+
+th{background:#005baa;color:white;padding:10px;}
+td{padding:10px;border-bottom:1px solid #ddd;}
+
+td[contenteditable]{background:#fff8e1;}
+.green{background:#d9f2e3;}
+.orange{background:#fff2cc;}
+.red{background:#ffd6d6;}
+
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+</head>
+
+<body>
+
+<div class="header">
+<span>Sistema Operativo Interno</span>
+<button class="backBtn" onclick="history.back()">Volver</button>
+</div>
+
+<div class="container">
+
+<h2>INLET OCR</h2>
+
+<!-- BOTONES -->
+<label class="btn">
+Subir Maestro
+<input type="file" id="fileMaster" accept=".xlsx">
+</label>
+
+<label class="btn">
+Subir PDF
+<input type="file" id="filePDF" accept="application/pdf">
+</label>
+
+<button class="btn" onclick="procesarFinal()">Procesar</button>
+
+<div id="status"></div>
+
+<table id="tabla">
+<thead>
+<tr>
+<th>Cliente</th>
+<th>Ciudad</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<div id="resultado"></div>
+
+</div>
+
+<script>
+
+let masterData=[];
+let ocrData=[];
+
+/* NORMALIZAR */
+function normalize(s){
+return (s||"")
+.toLowerCase()
+.normalize("NFD")
+.replace(/[\u0300-\u036f]/g,"")
+.trim();
+}
+
+/* CARGAR EXCEL */
+document.getElementById("fileMaster").addEventListener("change",async e=>{
+const file=e.target.files[0];
+const data=await file.arrayBuffer();
+const wb=XLSX.read(data,{type:'array'});
+const sheet=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+masterData=sheet;
+});
+
+/* OCR */
+document.getElementById("filePDF").addEventListener("change",async e=>{
+
+document.getElementById("status").innerText="Procesando OCR...";
+
+const file=e.target.files[0];
+const url=URL.createObjectURL(file);
+
+const {data:{text}}=await Tesseract.recognize(url,"spa");
+
+procesarTexto(text);
+
+});
+
+/* PARSEO TEXTO */
+function procesarTexto(text){
+
+const tbody=document.querySelector("#tabla tbody");
+tbody.innerHTML="";
+
+const lineas=text.split("\n");
+
+lineas.forEach(l=>{
+
+if(l.length>20){
+
+let partes=l.split(/\s{2,}/);
+
+if(partes.length>=2){
+
+let ciudad=partes.pop();
+let cliente=partes.join(" ");
+
+const tr=document.createElement("tr");
+
+tr.innerHTML=`
+<td contenteditable="true">${cliente}</td>
+<td contenteditable="true">${ciudad}</td>
+`;
+
+tbody.appendChild(tr);
+
+}
+}
+
+});
+
+document.getElementById("status").innerText="Revisa los datos antes de procesar";
+
+}
+
+/* MATCH */
+function procesarFinal(){
+
+const filas=document.querySelectorAll("#tabla tbody tr");
+
+let html="<table><tr><th>Cliente</th><th>Ciudad</th><th>Tier</th></tr>";
+
+filas.forEach(f=>{
+
+const cliente=f.children[0].innerText;
+const ciudad=f.children[1].innerText;
+
+let tier="NO";
+let tipo="red";
+
+const match=masterData.find(m=>
+normalize(JSON.stringify(m)).includes(normalize(cliente))
+);
+
+if(match){
+tier=match.TIER || match.tier || "-";
+tipo="green";
+}
+
+html+=`<tr class="${tipo}">
+<td>${cliente}</td>
+<td>${ciudad}</td>
+<td>${tier}</td>
+</tr>`;
+
+});
+
+html+="</table>";
+
+document.getElementById("resultado").innerHTML=html;
+
+}
+
+</script>
+
+</body>
+</html>
