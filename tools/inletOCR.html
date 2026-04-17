@@ -65,15 +65,16 @@ margin-top:20px;
 th{background:#005baa;color:white;padding:10px;}
 td{padding:10px;border-bottom:1px solid #ddd;}
 
-td[contenteditable]{background:#fff8e1;}
 .green{background:#d9f2e3;}
 .orange{background:#fff2cc;}
 .red{background:#ffd6d6;}
 
 </style>
 
+<!-- LIBRERÍAS -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
 </head>
 
@@ -99,19 +100,11 @@ Subir PDF
 <input type="file" id="filePDF" accept="application/pdf">
 </label>
 
-<button class="btn" onclick="procesarFinal()">Procesar</button>
+<button id="processBtn" class="btn" style="display:none;">
+Procesar Datos
+</button>
 
 <div id="status"></div>
-
-<table id="tabla">
-<thead>
-<tr>
-<th>Cliente</th>
-<th>Ciudad</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
 
 <div id="resultado"></div>
 
@@ -120,7 +113,14 @@ Subir PDF
 <script>
 
 let masterData=[];
-let ocrData=[];
+let pdfFile=null;
+
+/* CONTROL BOTÓN */
+function checkReady(){
+if(masterData.length && pdfFile){
+document.getElementById("processBtn").style.display="inline-block";
+}
+}
 
 /* NORMALIZAR */
 function normalize(s){
@@ -133,93 +133,157 @@ return (s||"")
 
 /* CARGAR EXCEL */
 document.getElementById("fileMaster").addEventListener("change",async e=>{
+
 const file=e.target.files[0];
 const data=await file.arrayBuffer();
+
 const wb=XLSX.read(data,{type:'array'});
 const sheet=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+
 masterData=sheet;
+
+checkReady();
+
 });
 
-/* OCR */
-document.getElementById("filePDF").addEventListener("change",async e=>{
+/* GUARDAR PDF */
+document.getElementById("filePDF").addEventListener("change",e=>{
+pdfFile=e.target.files[0];
+checkReady();
+});
+
+/* PROCESAR TODO */
+document.getElementById("processBtn").addEventListener("click",async()=>{
 
 document.getElementById("status").innerText="Procesando OCR...";
 
-const file=e.target.files[0];
-const url=URL.createObjectURL(file);
+const pdfjsLib = window['pdfjsLib'];
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
 
-const {data:{text}}=await Tesseract.recognize(url,"spa");
+const data = new Uint8Array(await pdfFile.arrayBuffer());
+const pdf = await pdfjsLib.getDocument({data}).promise;
 
-procesarTexto(text);
+let textoFinal="";
+
+/* OCR POR PÁGINA */
+for(let i=1;i<=pdf.numPages;i++){
+
+const page=await pdf.getPage(i);
+const viewport=page.getViewport({scale:2});
+
+const canvas=document.createElement("canvas");
+const ctx=canvas.getContext("2d");
+
+canvas.width=viewport.width;
+canvas.height=viewport.height;
+
+await page.render({canvasContext:ctx,viewport}).promise;
+
+const {data:{text}}=await Tesseract.recognize(canvas,"spa");
+
+textoFinal+=text+"\n";
+
+}
+
+/* PARSEAR TEXTO */
+const resultados=parsearTexto(textoFinal);
+
+/* CRUZAR CON MAESTRO */
+const final=cruzarConMaestro(resultados);
+
+/* MOSTRAR */
+render(final);
+
+document.getElementById("status").innerText="Proceso completado";
 
 });
 
-/* PARSEO TEXTO */
-function procesarTexto(text){
-
-const tbody=document.querySelector("#tabla tbody");
-tbody.innerHTML="";
+/* PARSEO INTELIGENTE */
+function parsearTexto(text){
 
 const lineas=text.split("\n");
 
+const datos=[];
+
 lineas.forEach(l=>{
 
-if(l.length>20){
+if(l.length<30) return;
 
-let partes=l.split(/\s{2,}/);
+const regex=/(\d+[#\d]*)\s+(.+?)\s+([A-Za-z\s]+)\s+(\d+)\s+(\d+)\s+([\d,\.]+)/;
 
-if(partes.length>=2){
+const m=l.match(regex);
 
-let ciudad=partes.pop();
-let cliente=partes.join(" ");
+if(m){
 
-const tr=document.createElement("tr");
+datos.push({
+pedido:m[1],
+cliente:m[2],
+ciudad:m[3],
+palets:m[4],
+bultos:m[5],
+peso:m[6]
+});
 
-tr.innerHTML=`
-<td contenteditable="true">${cliente}</td>
-<td contenteditable="true">${ciudad}</td>
-`;
-
-tbody.appendChild(tr);
-
-}
 }
 
 });
 
-document.getElementById("status").innerText="Revisa los datos antes de procesar";
+return datos;
 
 }
 
-/* MATCH */
-function procesarFinal(){
+/* CRUCE CON EXCEL */
+function cruzarConMaestro(datos){
 
-const filas=document.querySelectorAll("#tabla tbody tr");
-
-let html="<table><tr><th>Cliente</th><th>Ciudad</th><th>Tier</th></tr>";
-
-filas.forEach(f=>{
-
-const cliente=f.children[0].innerText;
-const ciudad=f.children[1].innerText;
+return datos.map(d=>{
 
 let tier="NO";
 let tipo="red";
 
 const match=masterData.find(m=>
-normalize(JSON.stringify(m)).includes(normalize(cliente))
+normalize(m.DESTINATARIO || m.destinatario || "")
+.includes(normalize(d.cliente))
 );
 
 if(match){
-tier=match.TIER || match.tier || "-";
+tier=match.TIERS || match.tiers || "-";
 tipo="green";
 }
 
-html+=`<tr class="${tipo}">
-<td>${cliente}</td>
-<td>${ciudad}</td>
-<td>${tier}</td>
-</tr>`;
+return {...d,tier,tipo};
+
+});
+
+}
+
+/* RENDER */
+function render(datos){
+
+let html=`
+<table>
+<tr>
+<th>Destinatario</th>
+<th>Población</th>
+<th>Tiers</th>
+<th>Palets</th>
+<th>Bultos</th>
+<th>Peso</th>
+</tr>
+`;
+
+datos.forEach(d=>{
+
+html+=`
+<tr class="${d.tipo}">
+<td>${d.cliente}</td>
+<td>${d.ciudad}</td>
+<td>${d.tier}</td>
+<td>${d.palets}</td>
+<td>${d.bultos}</td>
+<td>${d.peso}</td>
+</tr>
+`;
 
 });
 
