@@ -1,91 +1,47 @@
 <!DOCTYPE html>
-
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>INLET OCR</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
 body{font-family:Arial;background:#f4f6f9;margin:0;}
 
 .header{
-background:#005baa;
-color:white;
-padding:18px 25px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-font-weight:bold;
-font-size:20px;
-}
-
-.backBtn{
-background:white;
-color:#005baa;
-border:none;
-padding:8px 14px;
-border-radius:6px;
-cursor:pointer;
-font-weight:bold;
+background:#005baa;color:white;padding:18px 25px;
+display:flex;justify-content:space-between;
 }
 
 .container{
-max-width:1100px;
-margin:40px auto;
-background:white;
-padding:30px;
-border-radius:8px;
-box-shadow:0 2px 8px rgba(0,0,0,0.1);
-}
-
-h2{
-color:#005baa;
-border-bottom:2px solid #005baa;
-padding-bottom:8px;
+max-width:1100px;margin:40px auto;
+background:white;padding:30px;border-radius:8px;
 }
 
 .btn{
-background:#005baa;
-color:white;
-border:none;
-padding:12px 20px;
-border-radius:6px;
-cursor:pointer;
-font-weight:bold;
-margin-right:10px;
+background:#005baa;color:white;padding:10px 20px;
+border:none;border-radius:6px;cursor:pointer;margin-right:10px;
 }
 
-input[type=file]{display:none;}
-
-table{
-width:100%;
-border-collapse:collapse;
-margin-top:20px;
-}
-
+table{width:100%;border-collapse:collapse;margin-top:20px;}
 th{background:#005baa;color:white;padding:10px;}
-td{padding:10px;border-bottom:1px solid #ddd;}
-
-td[contenteditable]{background:#fff8e1;}
+td{padding:8px;border-bottom:1px solid #ddd;}
 
 .green{background:#d9f2e3;}
+.orange{background:#fff2cc;}
 .red{background:#ffd6d6;}
+
+td[contenteditable]{background:#fff8e1;}
 </style>
-
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-
 </head>
 
 <body>
 
 <div class="header">
 <span>Sistema Operativo Interno</span>
-<button class="backBtn" onclick="history.back()">Volver</button>
+<button onclick="history.back()">Volver</button>
 </div>
 
 <div class="container">
@@ -94,19 +50,21 @@ td[contenteditable]{background:#fff8e1;}
 
 <label class="btn">
 Subir Maestro
-<input type="file" id="fileMaster" accept=".xlsx">
+<input type="file" id="fileMaster" accept=".xlsx" hidden>
 </label>
 
 <label class="btn">
 Subir PDF
-<input type="file" id="filePDF" accept="application/pdf">
+<input type="file" id="filePDF" accept="application/pdf" hidden>
 </label>
 
-<button id="procesarBtn" class="btn" style="display:none;">Procesar</button>
+<button id="btnProcesar" class="btn" style="display:none;">
+Procesar Datos
+</button>
 
 <div id="status"></div>
 
-<table id="tabla">
+<table id="tablaPreview">
 <thead>
 <tr>
 <th>BL</th>
@@ -122,160 +80,187 @@ Subir PDF
 
 <div id="resultado"></div>
 
+<pre id="debug" style="font-size:10px;max-height:200px;overflow:auto;"></pre>
+
 </div>
 
 <script>
 
 let masterData=[];
-let masterLoaded=false;
+let ocrFilas=[];
+let masterOK=false;
+let pdfOK=false;
 
-let pdfFile=null;
-let pdfLoaded=false;
+const btnProcesar=document.getElementById("btnProcesar");
+
+function checkReady(){
+btnProcesar.style.display=(masterOK && pdfOK)?"inline-block":"none";
+}
 
 /* NORMALIZAR */
-function normalize(s){
-return (s||"")
-.toLowerCase()
+function norm(s){
+return (s||"").toLowerCase()
 .normalize("NFD")
 .replace(/[\u0300-\u036f]/g,"")
 .trim();
 }
 
-/* CONTROL BOTÓN */
-function checkReady(){
-document.getElementById("procesarBtn").style.display =
-(masterLoaded && pdfLoaded) ? "inline-block" : "none";
-}
-
-/* CARGAR MAESTRO */
-document.getElementById("fileMaster").addEventListener("change", async e=>{
+/* EXCEL */
+document.getElementById("fileMaster").addEventListener("change",async e=>{
 const file=e.target.files[0];
 const data=await file.arrayBuffer();
 const wb=XLSX.read(data,{type:'array'});
-const sheet=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-masterData=sheet;
+const json=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
 
-masterLoaded=true;
+masterData=json.map(r=>({
+dest: r["DESTINATARIO"] || r.destinatario || "",
+pob: r["POBLACIÓN"] || r.poblacion || "",
+tiers: r["TIERS"] || r.tiers || ""
+}));
+
+masterOK=true;
 checkReady();
 });
 
-/* GUARDAR PDF */
-document.getElementById("filePDF").addEventListener("change", e=>{
-pdfFile = e.target.files[0];
-pdfLoaded = true;
-checkReady();
-});
+/* OCR CON COORDENADAS */
+document.getElementById("filePDF").addEventListener("change",async e=>{
 
-/* BOTÓN PROCESAR */
-document.getElementById("procesarBtn").addEventListener("click", procesarFinal);
-
-/* OCR + PARSEO */
-async function procesarFinal(){
+const file=e.target.files[0];
+const url=URL.createObjectURL(file);
 
 document.getElementById("status").innerText="Procesando OCR...";
 
-const pdf = await pdfjsLib.getDocument(URL.createObjectURL(pdfFile)).promise;
-const page = await pdf.getPage(1);
+const result=await Tesseract.recognize(url,"spa");
 
-const viewport = page.getViewport({scale:2});
-const canvas = document.createElement("canvas");
-const ctx = canvas.getContext("2d");
+const words=result.data.words;
 
-canvas.width = viewport.width;
-canvas.height = viewport.height;
+/* FILTRO POR TUS COORDENADAS */
+const filtradas=words.filter(w=>{
+return w.bbox.x0>=40 &&
+       w.bbox.x1<=1400 &&
+       w.bbox.y0>=373 &&
+       w.bbox.y1<=873;
+});
 
-await page.render({canvasContext:ctx, viewport}).promise;
+/* AGRUPAR POR LINEAS */
+const lineas={};
 
-/* ✅ RECORTE EXACTO CON TUS COORDENADAS */
-const cropX = 40;
-const cropY = 373;
-const cropW = 1400 - 40;
-const cropH = 873 - 373;
+filtradas.forEach(w=>{
+const y=Math.floor(w.bbox.y0/10)*10;
+if(!lineas[y]) lineas[y]=[];
+lineas[y].push(w.text);
+});
 
-const cropped = ctx.getImageData(cropX, cropY, cropW, cropH);
+const texto=Object.keys(lineas)
+.sort((a,b)=>a-b)
+.map(y=>lineas[y].join(" "))
+.join("\n");
 
-const tempCanvas = document.createElement("canvas");
-tempCanvas.width = cropW;
-tempCanvas.height = cropH;
-tempCanvas.getContext("2d").putImageData(cropped,0,0);
+/* DEBUG */
+document.getElementById("debug").innerText=texto;
 
-/* OCR */
-const {data:{text}} = await Tesseract.recognize(tempCanvas,"spa");
+/* PARSEAR */
+parsearOCR(texto);
 
-/* PARSEO */
-procesarTexto(text);
+pdfOK=true;
+checkReady();
 
-document.getElementById("status").innerText="Revisa los datos antes de procesar";
+});
 
-}
+/* PARSER MEJORADO */
+function parsearOCR(text){
 
-/* PARSEO MEJORADO */
-function procesarTexto(text){
-
-const tbody=document.querySelector("#tabla tbody");
+const tbody=document.querySelector("#tablaPreview tbody");
 tbody.innerHTML="";
+ocrFilas=[];
 
 const lineas=text.split("\n");
 
 lineas.forEach(l=>{
 
-l = l.trim();
-if(l.length < 20) return;
+if(l.length<15) return;
 
-/* SEPARAR COLUMNAS */
-const partes = l.split(/\s{2,}/);
+/* BUSCAR NUMEROS */
+const numeros=l.match(/\d+/g);
+if(!numeros || numeros.length<3) return;
 
-if(partes.length >= 6){
+const peso=numeros.pop();
+const bultos=numeros.pop();
+const palets=numeros.pop();
 
-const tr=document.createElement("tr");
+/* BL */
+const blMatch=l.match(/\d{9,}(#\d+)*/);
+const bl=blMatch?blMatch[0]:"";
 
-tr.innerHTML=`
-<td contenteditable="true">${partes[0]}</td>
-<td contenteditable="true">${partes[1]}</td>
-<td contenteditable="true">${partes[2]}</td>
-<td contenteditable="true">${partes[3]}</td>
-<td contenteditable="true">${partes[4]}</td>
-<td contenteditable="true">${partes[5]}</td>
-`;
+/* TEXTO LIMPIO */
+let limpio=l.replace(bl,"")
+.replace(peso,"")
+.replace(bultos,"")
+.replace(palets,"");
 
-tbody.appendChild(tr);
+/* SEPARAR TEXTO */
+let partes=limpio.split(/\s{2,}/);
 
-}
+if(partes.length<2) return;
+
+const pob=partes.pop();
+const dest=partes.join(" ");
+
+ocrFilas.push({bl,dest,pob,palets,bultos,peso});
 
 });
+
+/* MOSTRAR PREVIEW */
+ocrFilas.forEach(r=>{
+const tr=document.createElement("tr");
+tr.innerHTML=`
+<td contenteditable>${r.bl}</td>
+<td contenteditable>${r.dest}</td>
+<td contenteditable>${r.pob}</td>
+<td>${r.palets}</td>
+<td>${r.bultos}</td>
+<td>${r.peso}</td>
+`;
+tbody.appendChild(tr);
+});
+
+document.getElementById("status").innerText="Revisa datos y pulsa Procesar";
 
 }
 
 /* MATCH FINAL */
-function procesarMatch(){
+btnProcesar.onclick=()=>{
 
-const filas=document.querySelectorAll("#tabla tbody tr");
+let html="<table><tr><th>BL</th><th>Dest</th><th>Pob</th><th>Tiers</th></tr>";
 
-let html="<table><tr><th>BL</th><th>Destinatario</th><th>Población</th><th>Tier</th></tr>";
+ocrFilas.forEach(d=>{
 
-filas.forEach(f=>{
-
-const cliente=f.children[1].innerText;
-const ciudad=f.children[2].innerText;
-
-let tier="NO";
+let tiers="NO";
 let tipo="red";
 
-const match=masterData.find(m=>
-normalize(m.DESTINATARIO||m.destinatario).includes(normalize(cliente)) &&
-normalize(m.POBLACION||m.poblacion).includes(normalize(ciudad))
+const exact=masterData.find(m=>
+norm(m.dest)===norm(d.dest) &&
+norm(m.pob)===norm(d.pob)
 );
 
-if(match){
-tier=match.TIERS || match.tiers || "-";
+if(exact){
+tiers=exact.tiers;
 tipo="green";
+}else{
+const fuzzy=masterData.find(m=>
+norm(m.dest).includes(norm(d.dest))
+);
+if(fuzzy){
+tiers=fuzzy.tiers;
+tipo="orange";
+}
 }
 
 html+=`<tr class="${tipo}">
-<td>${f.children[0].innerText}</td>
-<td>${cliente}</td>
-<td>${ciudad}</td>
-<td>${tier}</td>
+<td>${d.bl}</td>
+<td>${d.dest}</td>
+<td>${d.pob}</td>
+<td>${tiers}</td>
 </tr>`;
 
 });
@@ -284,7 +269,7 @@ html+="</table>";
 
 document.getElementById("resultado").innerHTML=html;
 
-}
+};
 
 </script>
 
