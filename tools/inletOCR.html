@@ -110,8 +110,8 @@ Subir PDF
 <thead>
 <tr>
 <th>BL</th>
-<th>Cliente</th>
-<th>Ciudad</th>
+<th>Destinatario</th>
+<th>Población</th>
 <th>Palets</th>
 <th>Bultos</th>
 <th>Peso</th>
@@ -159,7 +159,7 @@ masterLoaded=true;
 checkReady();
 });
 
-/* GUARDAR PDF (NO OCR AÚN) */
+/* GUARDAR PDF */
 document.getElementById("filePDF").addEventListener("change", e=>{
 pdfFile = e.target.files[0];
 pdfLoaded = true;
@@ -186,11 +186,11 @@ canvas.height = viewport.height;
 
 await page.render({canvasContext:ctx, viewport}).promise;
 
-/* RECORTE (luego lo afinaremos) */
-const cropX = canvas.width * 0.05;
-const cropY = canvas.height * 0.25;
-const cropW = canvas.width * 0.9;
-const cropH = canvas.height * 0.5;
+/* ✅ RECORTE EXACTO CON TUS COORDENADAS */
+const cropX = 40;
+const cropY = 373;
+const cropW = 1400 - 40;
+const cropH = 873 - 373;
 
 const cropped = ctx.getImageData(cropX, cropY, cropW, cropH);
 
@@ -209,7 +209,7 @@ document.getElementById("status").innerText="Revisa los datos antes de procesar"
 
 }
 
-/* PARSEAR TEXTO */
+/* PARSEO MEJORADO */
 function procesarTexto(text){
 
 const tbody=document.querySelector("#tabla tbody");
@@ -219,19 +219,23 @@ const lineas=text.split("\n");
 
 lineas.forEach(l=>{
 
-const match=l.match(/(\d{6,}(?:#\d+)*)\s+(.*?)\s+([A-Za-zÁÉÍÓÚñ\s]+)\s+(\d{1,2})\s+(\d+)\s+([\d.,]+)/);
+l = l.trim();
+if(l.length < 20) return;
 
-if(match){
+/* SEPARAR COLUMNAS */
+const partes = l.split(/\s{2,}/);
+
+if(partes.length >= 6){
 
 const tr=document.createElement("tr");
 
 tr.innerHTML=`
-<td contenteditable="true">${match[1]}</td>
-<td contenteditable="true">${match[2]}</td>
-<td contenteditable="true">${match[3]}</td>
-<td contenteditable="true">${match[4]}</td>
-<td contenteditable="true">${match[5]}</td>
-<td contenteditable="true">${match[6]}</td>
+<td contenteditable="true">${partes[0]}</td>
+<td contenteditable="true">${partes[1]}</td>
+<td contenteditable="true">${partes[2]}</td>
+<td contenteditable="true">${partes[3]}</td>
+<td contenteditable="true">${partes[4]}</td>
+<td contenteditable="true">${partes[5]}</td>
 `;
 
 tbody.appendChild(tr);
@@ -247,7 +251,7 @@ function procesarMatch(){
 
 const filas=document.querySelectorAll("#tabla tbody tr");
 
-let html="<table><tr><th>BL</th><th>Cliente</th><th>Ciudad</th><th>Tier</th></tr>";
+let html="<table><tr><th>BL</th><th>Destinatario</th><th>Población</th><th>Tier</th></tr>";
 
 filas.forEach(f=>{
 
