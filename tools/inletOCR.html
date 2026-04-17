@@ -52,6 +52,7 @@ padding:12px 20px;
 border-radius:6px;
 cursor:pointer;
 font-weight:bold;
+margin-right:10px;
 }
 
 input[type=file]{display:none;}
@@ -65,16 +66,17 @@ margin-top:20px;
 th{background:#005baa;color:white;padding:10px;}
 td{padding:10px;border-bottom:1px solid #ddd;}
 
+td[contenteditable]{background:#fff8e1;}
+
 .green{background:#d9f2e3;}
 .orange{background:#fff2cc;}
 .red{background:#ffd6d6;}
 
 </style>
 
-<!-- LIBRERÍAS -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
 </head>
 
@@ -89,7 +91,6 @@ td{padding:10px;border-bottom:1px solid #ddd;}
 
 <h2>INLET OCR</h2>
 
-<!-- BOTONES -->
 <label class="btn">
 Subir Maestro
 <input type="file" id="fileMaster" accept=".xlsx">
@@ -100,11 +101,23 @@ Subir PDF
 <input type="file" id="filePDF" accept="application/pdf">
 </label>
 
-<button id="processBtn" class="btn" style="display:none;">
-Procesar Datos
-</button>
+<button id="procesarBtn" class="btn" style="display:none;" onclick="procesarFinal()">Procesar</button>
 
 <div id="status"></div>
+
+<table id="tabla">
+<thead>
+<tr>
+<th>BL</th>
+<th>Cliente</th>
+<th>Ciudad</th>
+<th>Palets</th>
+<th>Bultos</th>
+<th>Peso</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
 
 <div id="resultado"></div>
 
@@ -113,14 +126,9 @@ Procesar Datos
 <script>
 
 let masterData=[];
-let pdfFile=null;
-
-/* CONTROL BOTÓN */
-function checkReady(){
-if(masterData.length && pdfFile){
-document.getElementById("processBtn").style.display="inline-block";
-}
-}
+let ocrData=[];
+let masterLoaded=false;
+let pdfLoaded=false;
 
 /* NORMALIZAR */
 function normalize(s){
@@ -131,119 +139,129 @@ return (s||"")
 .trim();
 }
 
+/* CONTROL BOTÓN */
+function checkReady(){
+document.getElementById("procesarBtn").style.display =
+(masterLoaded && pdfLoaded) ? "inline-block" : "none";
+}
+
 /* CARGAR EXCEL */
 document.getElementById("fileMaster").addEventListener("change",async e=>{
-
 const file=e.target.files[0];
 const data=await file.arrayBuffer();
-
 const wb=XLSX.read(data,{type:'array'});
 const sheet=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-
 masterData=sheet;
-
-checkReady();
-
-});
-
-/* GUARDAR PDF */
-document.getElementById("filePDF").addEventListener("change",e=>{
-pdfFile=e.target.files[0];
+masterLoaded=true;
 checkReady();
 });
 
-/* PROCESAR TODO */
-document.getElementById("processBtn").addEventListener("click",async()=>{
+/* OCR PDF CON RECORTE */
+document.getElementById("filePDF").addEventListener("change",async e=>{
 
 document.getElementById("status").innerText="Procesando OCR...";
 
-const pdfjsLib = window['pdfjsLib'];
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+const file=e.target.files[0];
 
-const data = new Uint8Array(await pdfFile.arrayBuffer());
-const pdf = await pdfjsLib.getDocument({data}).promise;
+const pdf = await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
+const page = await pdf.getPage(1);
 
-let textoFinal="";
+const viewport = page.getViewport({scale:2});
+const canvas = document.createElement("canvas");
+const ctx = canvas.getContext("2d");
 
-/* OCR POR PÁGINA */
-for(let i=1;i<=pdf.numPages;i++){
+canvas.width = viewport.width;
+canvas.height = viewport.height;
 
-const page=await pdf.getPage(i);
-const viewport=page.getViewport({scale:2});
+await page.render({canvasContext:ctx, viewport}).promise;
 
-const canvas=document.createElement("canvas");
-const ctx=canvas.getContext("2d");
+/* 🔥 RECORTE CENTRAL (AJUSTABLE) */
+const cropX = canvas.width * 0.05;
+const cropY = canvas.height * 0.25;
+const cropW = canvas.width * 0.9;
+const cropH = canvas.height * 0.5;
 
-canvas.width=viewport.width;
-canvas.height=viewport.height;
+const cropped = ctx.getImageData(cropX, cropY, cropW, cropH);
 
-await page.render({canvasContext:ctx,viewport}).promise;
+const tempCanvas = document.createElement("canvas");
+tempCanvas.width = cropW;
+tempCanvas.height = cropH;
+tempCanvas.getContext("2d").putImageData(cropped,0,0);
 
-const {data:{text}}=await Tesseract.recognize(canvas,"spa");
+const {data:{text}} = await Tesseract.recognize(tempCanvas,"spa");
 
-textoFinal+=text+"\n";
+procesarTexto(text);
 
-}
-
-/* PARSEAR TEXTO */
-const resultados=parsearTexto(textoFinal);
-
-/* CRUZAR CON MAESTRO */
-const final=cruzarConMaestro(resultados);
-
-/* MOSTRAR */
-render(final);
-
-document.getElementById("status").innerText="Proceso completado";
+pdfLoaded=true;
+checkReady();
 
 });
 
 /* PARSEO INTELIGENTE */
-function parsearTexto(text){
+function procesarTexto(text){
+
+const tbody=document.querySelector("#tabla tbody");
+tbody.innerHTML="";
 
 const lineas=text.split("\n");
 
-const datos=[];
-
 lineas.forEach(l=>{
 
-if(l.length<30) return;
+/* Detectar línea válida con números */
+const match=l.match(/(\d{6,}(?:#\d+)*)\s+(.*?)\s+([A-Za-zÁÉÍÓÚñ\s]+)\s+(\d{1,2})\s+(\d+)\s+([\d.,]+)/);
 
-const regex=/(\d+[#\d]*)\s+(.+?)\s+([A-Za-z\s]+)\s+(\d+)\s+(\d+)\s+([\d,\.]+)/;
+if(match){
 
-const m=l.match(regex);
+const bl=match[1];
+const cliente=match[2];
+const ciudad=match[3];
+const palets=match[4];
+const bultos=match[5];
+const peso=match[6];
 
-if(m){
+const tr=document.createElement("tr");
 
-datos.push({
-pedido:m[1],
-cliente:m[2],
-ciudad:m[3],
-palets:m[4],
-bultos:m[5],
-peso:m[6]
-});
+tr.innerHTML=`
+<td contenteditable="true">${bl}</td>
+<td contenteditable="true">${cliente}</td>
+<td contenteditable="true">${ciudad}</td>
+<td contenteditable="true">${palets}</td>
+<td contenteditable="true">${bultos}</td>
+<td contenteditable="true">${peso}</td>
+`;
+
+tbody.appendChild(tr);
 
 }
 
 });
 
-return datos;
+document.getElementById("status").innerText="Revisa los datos antes de procesar";
 
 }
 
-/* CRUCE CON EXCEL */
-function cruzarConMaestro(datos){
+/* MATCH FINAL */
+function procesarFinal(){
 
-return datos.map(d=>{
+const filas=document.querySelectorAll("#tabla tbody tr");
+
+let html="<table><tr><th>BL</th><th>Cliente</th><th>Ciudad</th><th>Tier</th><th>Palets</th><th>Bultos</th><th>Peso</th></tr>";
+
+filas.forEach(f=>{
+
+const bl=f.children[0].innerText;
+const cliente=f.children[1].innerText;
+const ciudad=f.children[2].innerText;
+const palets=f.children[3].innerText;
+const bultos=f.children[4].innerText;
+const peso=f.children[5].innerText;
 
 let tier="NO";
 let tipo="red";
 
 const match=masterData.find(m=>
-normalize(m.DESTINATARIO || m.destinatario || "")
-.includes(normalize(d.cliente))
+normalize(m.DESTINATARIO||m.destinatario).includes(normalize(cliente)) &&
+normalize(m.POBLACION||m.poblacion).includes(normalize(ciudad))
 );
 
 if(match){
@@ -251,39 +269,15 @@ tier=match.TIERS || match.tiers || "-";
 tipo="green";
 }
 
-return {...d,tier,tipo};
-
-});
-
-}
-
-/* RENDER */
-function render(datos){
-
-let html=`
-<table>
-<tr>
-<th>Destinatario</th>
-<th>Población</th>
-<th>Tiers</th>
-<th>Palets</th>
-<th>Bultos</th>
-<th>Peso</th>
-</tr>
-`;
-
-datos.forEach(d=>{
-
-html+=`
-<tr class="${d.tipo}">
-<td>${d.cliente}</td>
-<td>${d.ciudad}</td>
-<td>${d.tier}</td>
-<td>${d.palets}</td>
-<td>${d.bultos}</td>
-<td>${d.peso}</td>
-</tr>
-`;
+html+=`<tr class="${tipo}">
+<td>${bl}</td>
+<td>${cliente}</td>
+<td>${ciudad}</td>
+<td>${tier}</td>
+<td>${palets}</td>
+<td>${bultos}</td>
+<td>${peso}</td>
+</tr>`;
 
 });
 
