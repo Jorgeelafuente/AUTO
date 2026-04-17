@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -69,13 +70,13 @@ td{padding:10px;border-bottom:1px solid #ddd;}
 td[contenteditable]{background:#fff8e1;}
 
 .green{background:#d9f2e3;}
-.orange{background:#fff2cc;}
 .red{background:#ffd6d6;}
-
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 </head>
@@ -101,7 +102,7 @@ Subir PDF
 <input type="file" id="filePDF" accept="application/pdf">
 </label>
 
-<button id="procesarBtn" class="btn" style="display:none;" onclick="procesarFinal()">Procesar</button>
+<button id="procesarBtn" class="btn" style="display:none;">Procesar</button>
 
 <div id="status"></div>
 
@@ -126,8 +127,9 @@ Subir PDF
 <script>
 
 let masterData=[];
-let ocrData=[];
 let masterLoaded=false;
+
+let pdfFile=null;
 let pdfLoaded=false;
 
 /* NORMALIZAR */
@@ -145,25 +147,34 @@ document.getElementById("procesarBtn").style.display =
 (masterLoaded && pdfLoaded) ? "inline-block" : "none";
 }
 
-/* CARGAR EXCEL */
-document.getElementById("fileMaster").addEventListener("change",async e=>{
+/* CARGAR MAESTRO */
+document.getElementById("fileMaster").addEventListener("change", async e=>{
 const file=e.target.files[0];
 const data=await file.arrayBuffer();
 const wb=XLSX.read(data,{type:'array'});
 const sheet=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
 masterData=sheet;
+
 masterLoaded=true;
 checkReady();
 });
 
-/* OCR PDF CON RECORTE */
-document.getElementById("filePDF").addEventListener("change",async e=>{
+/* GUARDAR PDF (NO OCR AÚN) */
+document.getElementById("filePDF").addEventListener("change", e=>{
+pdfFile = e.target.files[0];
+pdfLoaded = true;
+checkReady();
+});
+
+/* BOTÓN PROCESAR */
+document.getElementById("procesarBtn").addEventListener("click", procesarFinal);
+
+/* OCR + PARSEO */
+async function procesarFinal(){
 
 document.getElementById("status").innerText="Procesando OCR...";
 
-const file=e.target.files[0];
-
-const pdf = await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
+const pdf = await pdfjsLib.getDocument(URL.createObjectURL(pdfFile)).promise;
 const page = await pdf.getPage(1);
 
 const viewport = page.getViewport({scale:2});
@@ -175,7 +186,7 @@ canvas.height = viewport.height;
 
 await page.render({canvasContext:ctx, viewport}).promise;
 
-/* 🔥 RECORTE CENTRAL (AJUSTABLE) */
+/* RECORTE (luego lo afinaremos) */
 const cropX = canvas.width * 0.05;
 const cropY = canvas.height * 0.25;
 const cropW = canvas.width * 0.9;
@@ -188,16 +199,17 @@ tempCanvas.width = cropW;
 tempCanvas.height = cropH;
 tempCanvas.getContext("2d").putImageData(cropped,0,0);
 
+/* OCR */
 const {data:{text}} = await Tesseract.recognize(tempCanvas,"spa");
 
+/* PARSEO */
 procesarTexto(text);
 
-pdfLoaded=true;
-checkReady();
+document.getElementById("status").innerText="Revisa los datos antes de procesar";
 
-});
+}
 
-/* PARSEO INTELIGENTE */
+/* PARSEAR TEXTO */
 function procesarTexto(text){
 
 const tbody=document.querySelector("#tabla tbody");
@@ -207,27 +219,19 @@ const lineas=text.split("\n");
 
 lineas.forEach(l=>{
 
-/* Detectar línea válida con números */
 const match=l.match(/(\d{6,}(?:#\d+)*)\s+(.*?)\s+([A-Za-zÁÉÍÓÚñ\s]+)\s+(\d{1,2})\s+(\d+)\s+([\d.,]+)/);
 
 if(match){
 
-const bl=match[1];
-const cliente=match[2];
-const ciudad=match[3];
-const palets=match[4];
-const bultos=match[5];
-const peso=match[6];
-
 const tr=document.createElement("tr");
 
 tr.innerHTML=`
-<td contenteditable="true">${bl}</td>
-<td contenteditable="true">${cliente}</td>
-<td contenteditable="true">${ciudad}</td>
-<td contenteditable="true">${palets}</td>
-<td contenteditable="true">${bultos}</td>
-<td contenteditable="true">${peso}</td>
+<td contenteditable="true">${match[1]}</td>
+<td contenteditable="true">${match[2]}</td>
+<td contenteditable="true">${match[3]}</td>
+<td contenteditable="true">${match[4]}</td>
+<td contenteditable="true">${match[5]}</td>
+<td contenteditable="true">${match[6]}</td>
 `;
 
 tbody.appendChild(tr);
@@ -236,25 +240,19 @@ tbody.appendChild(tr);
 
 });
 
-document.getElementById("status").innerText="Revisa los datos antes de procesar";
-
 }
 
 /* MATCH FINAL */
-function procesarFinal(){
+function procesarMatch(){
 
 const filas=document.querySelectorAll("#tabla tbody tr");
 
-let html="<table><tr><th>BL</th><th>Cliente</th><th>Ciudad</th><th>Tier</th><th>Palets</th><th>Bultos</th><th>Peso</th></tr>";
+let html="<table><tr><th>BL</th><th>Cliente</th><th>Ciudad</th><th>Tier</th></tr>";
 
 filas.forEach(f=>{
 
-const bl=f.children[0].innerText;
 const cliente=f.children[1].innerText;
 const ciudad=f.children[2].innerText;
-const palets=f.children[3].innerText;
-const bultos=f.children[4].innerText;
-const peso=f.children[5].innerText;
 
 let tier="NO";
 let tipo="red";
@@ -270,13 +268,10 @@ tipo="green";
 }
 
 html+=`<tr class="${tipo}">
-<td>${bl}</td>
+<td>${f.children[0].innerText}</td>
 <td>${cliente}</td>
 <td>${ciudad}</td>
 <td>${tier}</td>
-<td>${palets}</td>
-<td>${bultos}</td>
-<td>${peso}</td>
 </tr>`;
 
 });
