@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Coordenadas OCR</title>
+
+<style>
+body{background:#111;color:white;text-align:center;font-family:Arial;}
+canvas{border:2px solid white;margin-top:20px;}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+
+</head>
+
+<body>
+
+<h2>Herramienta Coordenadas OCR</h2>
+
+<input type="file" id="filePDF">
+
+<canvas id="canvas"></canvas>
+
+<div id="coords">X: 0 | Y: 0</div>
+
+<script>
+
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+
+document.getElementById("filePDF").addEventListener("change", async e=>{
+
+const file=e.target.files[0];
+
+const pdf=await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
+const page=await pdf.getPage(1);
+
+const viewport=page.getViewport({scale:2});
+
+canvas.width=viewport.width;
+canvas.height=viewport.height;
+
+await page.render({canvasContext:ctx,viewport}).promise;
+
+});
+
+canvas.addEventListener("mousemove", e=>{
+
+const rect=canvas.getBoundingClientRect();
+
+const x=Math.floor(e.clientX-rect.left);
+const y=Math.floor(e.clientY-rect.top);
+
+document.getElementById("coords").innerText=`X: ${x} | Y: ${y}`;
+
+});
+
+canvas.addEventListener("click", e=>{
+
+const rect=canvas.getBoundingClientRect();
+
+const x=Math.floor(e.clientX-rect.left);
+const y=Math.floor(e.clientY-rect.top);
+
+ctx.fillStyle="red";
+ctx.fillRect(x-3,y-3,6,6);
+
+console.log("CLICK:",x,y);
+
+});
+
+</script>
+
+</body>
+</html>
