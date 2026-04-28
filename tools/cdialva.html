@@ -133,7 +133,7 @@ input[type=file]{
 display:none;
 }
 
-/* NUEVOS COLORES */
+/* COLORES NUEVOS */
 
 .fila-cong{
 background:#d6eaff;
@@ -142,7 +142,7 @@ border-radius:4px;
 }
 
 .fila-refr{
-background:#fff3cd;
+background:#ffd9b3; /* NARANJA */
 padding:3px 6px;
 border-radius:4px;
 }
@@ -165,11 +165,11 @@ border-radius:4px;
 
 <button class="button" onclick="document.getElementById('maestroInput').click()">Subir archivo maestro</button>
 <input type="file" id="maestroInput" accept=".xlsx">
-<div id="maestroName" class="filename">Ningún archivo maestro</div>
+<div id="maestroName" class="filename"></div>
 
 <button class="button" onclick="document.getElementById('diarioInput').click()">Subir archivo diario</button>
 <input type="file" id="diarioInput" accept=".xlsx">
-<div id="diarioName" class="filename">Ningún archivo diario</div>
+<div id="diarioName" class="filename"></div>
 
 <button id="procesarBtn" class="button" style="display:none;">Procesar datos</button>
 
@@ -191,22 +191,32 @@ return String(s)
 .toLowerCase();
 }
 
-/* FORMATEAR OBSERVACIONES */
+/* 🔥 FORMATEAR Y SEPARAR OBSERVACIONES */
 function formatearObservaciones(obs){
 
 if(!obs) return "";
 
-let texto = obs;
+let base = obs.replace(/Cong:\s*0[, ]*/gi, "")
+              .replace(/Refr:\s*0[, ]*/gi, "")
+              .replace(/,\s*,/g, ",")
+              .trim();
 
-texto = texto.replace(/Cong:\s*0[, ]*/gi, "");
-texto = texto.replace(/Refr:\s*0[, ]*/gi, "");
-texto = texto.replace(/,\s*,/g, ",").trim();
+let partes = [];
 
-let clase = "";
-if(/Cong:\s*\d+/i.test(texto)) clase = "fila-cong";
-if(/Refr:\s*\d+/i.test(texto)) clase = "fila-refr";
+const congMatch = base.match(/Cong:\s*\d+/i);
+const refrMatch = base.match(/Refr:\s*\d+/i);
 
-return `<span class="${clase}">${texto}</span>`;
+if(congMatch){
+partes.push(`<span class="fila-cong">${base.replace(/Refr:\s*\d+/i,'').trim()}</span>`);
+}
+
+if(refrMatch){
+partes.push(`<span class="fila-refr">${base.replace(/Cong:\s*\d+/i,'').trim()}</span>`);
+}
+
+/* ORDEN: CONG → REFR */
+return partes.join("<br>");
+
 }
 
 /* ELEMENTOS */
@@ -229,7 +239,7 @@ let datosDiario=[];
 maestroInput.addEventListener('change', async (e)=>{
 
 maestroFile=e.target.files[0];
-maestroName.textContent=maestroFile.name;
+maestroName.textContent="Archivo cargado: " + maestroFile.name;
 
 datosMaestro=await leerExcelMaestro(maestroFile);
 
@@ -240,7 +250,7 @@ comprobar();
 diarioInput.addEventListener('change', async (e)=>{
 
 diarioFile=e.target.files[0];
-diarioName.textContent=diarioFile.name;
+diarioName.textContent="Archivo cargado: " + diarioFile.name;
 
 datosDiario=await leerExcelDiario(diarioFile);
 
