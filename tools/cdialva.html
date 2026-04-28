@@ -102,20 +102,6 @@ color:#555;
 align-self:center;
 }
 
-/* PANELES */
-
-.panel{
-background:#f9fbfd;
-border:1px solid var(--border-grey);
-padding:12px;
-border-radius:4px;
-margin-top:15px;
-}
-
-.panel strong{
-color:var(--primary-dark);
-}
-
 /* TABLA */
 
 table{
@@ -147,6 +133,20 @@ input[type=file]{
 display:none;
 }
 
+/* NUEVOS COLORES */
+
+.fila-cong{
+background:#d6eaff;
+padding:3px 6px;
+border-radius:4px;
+}
+
+.fila-refr{
+background:#fff3cd;
+padding:3px 6px;
+border-radius:4px;
+}
+
 </style>
 </head>
 
@@ -163,26 +163,16 @@ display:none;
 
 <div class="controls">
 
-<button class="button" onclick="document.getElementById('maestroInput').click()">Subir archivo maestro </button>
+<button class="button" onclick="document.getElementById('maestroInput').click()">Subir archivo maestro</button>
 <input type="file" id="maestroInput" accept=".xlsx">
 <div id="maestroName" class="filename">Ningún archivo maestro</div>
 
-<button class="button" onclick="document.getElementById('diarioInput').click()">Subir archivo diario </button>
+<button class="button" onclick="document.getElementById('diarioInput').click()">Subir archivo diario</button>
 <input type="file" id="diarioInput" accept=".xlsx">
 <div id="diarioName" class="filename">Ningún archivo diario</div>
 
 <button id="procesarBtn" class="button" style="display:none;">Procesar datos</button>
 
-</div>
-
-<div class="panel" style="display:none;">
-<strong>Datos archivo maestro</strong>
-<div id="vistaMaestro"></div>
-</div>
-
-<div class="panel" style="display:none;">
-<strong>Datos archivo diario</strong>
-<div id="vistaDiario"></div>
 </div>
 
 <div id="tablaResultados"></div>
@@ -191,15 +181,42 @@ display:none;
 
 <script>
 
+/* NORMALIZAR */
+function normalizeText(s){
+if(!s) return '';
+return String(s)
+.normalize('NFD')
+.replace(/[\u0300-\u036f]/g,'')
+.trim()
+.toLowerCase();
+}
+
+/* FORMATEAR OBSERVACIONES */
+function formatearObservaciones(obs){
+
+if(!obs) return "";
+
+let texto = obs;
+
+texto = texto.replace(/Cong:\s*0[, ]*/gi, "");
+texto = texto.replace(/Refr:\s*0[, ]*/gi, "");
+texto = texto.replace(/,\s*,/g, ",").trim();
+
+let clase = "";
+if(/Cong:\s*\d+/i.test(texto)) clase = "fila-cong";
+if(/Refr:\s*\d+/i.test(texto)) clase = "fila-refr";
+
+return `<span class="${clase}">${texto}</span>`;
+}
+
+/* ELEMENTOS */
+
 const maestroInput = document.getElementById('maestroInput');
 const diarioInput = document.getElementById('diarioInput');
 const procesarBtn = document.getElementById('procesarBtn');
 
 const maestroName = document.getElementById('maestroName');
 const diarioName = document.getElementById('diarioName');
-
-const vistaMaestro = document.getElementById('vistaMaestro');
-const vistaDiario = document.getElementById('vistaDiario');
 
 const tablaResultados = document.getElementById('tablaResultados');
 
@@ -212,14 +229,9 @@ let datosDiario=[];
 maestroInput.addEventListener('change', async (e)=>{
 
 maestroFile=e.target.files[0];
-
 maestroName.textContent=maestroFile.name;
 
 datosMaestro=await leerExcelMaestro(maestroFile);
-
-vistaMaestro.innerHTML=datosMaestro.map(d=>
-`<div><b>${d.destinatario}</b> | ${d.direccion} | ${d.tiers}</div>`
-).join("");
 
 comprobar();
 
@@ -228,14 +240,9 @@ comprobar();
 diarioInput.addEventListener('change', async (e)=>{
 
 diarioFile=e.target.files[0];
-
 diarioName.textContent=diarioFile.name;
 
 datosDiario=await leerExcelDiario(diarioFile);
-
-vistaDiario.innerHTML=datosDiario.map(d=>
-`<div><b>${d.destinatario}</b><br>${d.direccion}</div>`
-).join("");
 
 comprobar();
 
@@ -260,7 +267,6 @@ const reader=new FileReader();
 reader.onload=(e)=>{
 
 const workbook=XLSX.read(new Uint8Array(e.target.result),{type:"array"});
-
 const sheet=XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]],{header:1});
 
 resolve(sheet.slice(1).filter(r=>r[0]&&r[1]).map(r=>({
@@ -288,7 +294,6 @@ const reader=new FileReader();
 reader.onload=(e)=>{
 
 const workbook=XLSX.read(new Uint8Array(e.target.result),{type:"array"});
-
 const sheet=XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]],{header:1});
 
 const datos=[];
@@ -302,17 +307,12 @@ if(!row[0] || !row[1]) return;
 const k=row[0].toString().toLowerCase();
 
 if(k.includes("destinatario")) actual.destinatario=row[1];
-
 if(k.includes("direccion")) actual.direccion=row[1];
 
 if(k.includes("observaciones")){
-
 actual.observaciones=row[1];
-
 datos.push({...actual});
-
 actual={destinatario:"",direccion:"",observaciones:""};
-
 }
 
 });
@@ -336,19 +336,32 @@ diario.forEach(d=>{
 let tiers="-";
 let tipo="no-match";
 
-const exact=maestro.find(m=>
-m.destinatario.toLowerCase()===d.destinatario.toLowerCase()
+const exact = maestro.find(m =>
+normalizeText(m.destinatario) === normalizeText(d.destinatario)
 );
 
 if(exact){
 tiers=exact.tiers;
 tipo="exact";
+}else{
+const best = stringSimilarity.findBestMatch(
+normalizeText(d.destinatario),
+maestro.map(m => normalizeText(m.destinatario))
+);
+
+if(best.bestMatch.rating > 0.6){
+const match = maestro.find(m =>
+normalizeText(m.destinatario) === best.bestMatch.target
+);
+tiers = match?.tiers || "-";
+tipo="fuzzy";
+}
 }
 
 html+=`<tr class="${tipo}">
 <td>${d.destinatario}</td>
 <td>${d.direccion}</td>
-<td>${d.observaciones}</td>
+<td>${formatearObservaciones(d.observaciones)}</td>
 <td>${tiers}</td>
 </tr>`;
 
