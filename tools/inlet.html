@@ -242,6 +242,38 @@ const sheet=workbook.Sheets[workbook.SheetNames[0]];
 return XLSX.utils.sheet_to_json(sheet,{header:1});
 }
 
+/* 🔥 NUEVO: FORMATEAR FECHA EXCEL */
+
+function formatFechaExcel(valor){
+
+if(!valor) return "-";
+
+/* Si ya es texto */
+if(typeof valor === "string") return valor;
+
+/* Si es número (fecha Excel) */
+if(typeof valor === "number"){
+
+const fecha = new Date((valor - 25569) * 86400 * 1000);
+
+const dia = String(fecha.getDate()).padStart(2,'0');
+const mes = String(fecha.getMonth()+1).padStart(2,'0');
+const año = fecha.getFullYear();
+
+const horas = String(fecha.getHours()).padStart(2,'0');
+const minutos = String(fecha.getMinutes()).padStart(2,'0');
+
+/* Si tiene hora */
+if(horas !== "00" || minutos !== "00"){
+return `${dia}/${mes}/${año} ${horas}:${minutos}`;
+}
+
+return `${dia}/${mes}/${año}`;
+}
+
+return "-";
+}
+
 /* NORMALIZAR */
 
 function normalizeText(s){
@@ -256,22 +288,15 @@ return String(s)
 /* LEVENSHTEIN */
 
 function levenshtein(a,b){
-
 if(a===b) return 0;
 
 const matrix=[];
 
-for(let i=0;i<=b.length;i++){
-matrix[i]=[i];
-}
-
-for(let j=0;j<=a.length;j++){
-matrix[0][j]=j;
-}
+for(let i=0;i<=b.length;i++){ matrix[i]=[i]; }
+for(let j=0;j<=a.length;j++){ matrix[0][j]=j; }
 
 for(let i=1;i<=b.length;i++){
 for(let j=1;j<=a.length;j++){
-
 if(b.charAt(i-1)==a.charAt(j-1)){
 matrix[i][j]=matrix[i-1][j-1];
 }else{
@@ -281,7 +306,6 @@ matrix[i][j-1]+1,
 matrix[i-1][j]+1
 );
 }
-
 }
 }
 
@@ -291,26 +315,19 @@ return matrix[b.length][a.length];
 /* SIMILITUD */
 
 function similarity(a,b){
-
 const na=normalizeText(a);
 const nb=normalizeText(b);
-
 const dist=levenshtein(na,nb);
-
 const maxLen=Math.max(na.length,nb.length);
-
 return maxLen===0 ? 1 : 1 - dist/maxLen;
-
 }
 
 /* MAPA MAESTRO */
 
 function buildMasterMap(rows){
-
 const map=new Map();
 
 for(const row of rows){
-
 if(!row || row.length<3) continue;
 
 const dest=row[0];
@@ -320,7 +337,6 @@ const tiers=row[2];
 const key=normalizeText(dest)+'|'+normalizeText(pob);
 
 map.set(key,{tiers});
-
 }
 
 return map;
@@ -350,7 +366,6 @@ best={key,val};
 }
 
 return {best,bestScore};
-
 }
 
 /* PROCESAR */
@@ -375,7 +390,7 @@ const pob=row[1];
 const palets=row[2];
 const bultos=row[3];
 const peso=row[4];
-const fecha=row[5] || "-";
+const fecha=formatFechaExcel(row[5]); // 🔥 AQUÍ ESTÁ EL CAMBIO
 
 const key=normalizeText(dest)+'|'+normalizeText(pob);
 
@@ -383,23 +398,17 @@ let tiers='-';
 let type='none';
 
 if(masterMap.has(key)){
-
 tiers=masterMap.get(key).tiers;
 type='exact';
-
 }else{
-
 const {best,bestScore}=findBestFuzzy(masterMap.entries(),dest,pob);
-
 if(best && bestScore>=0.8){
 tiers=best.val.tiers;
 type='fuzzy';
 }
-
 }
 
 results.push({dest,pob,palets,bultos,peso,fecha,tiers,type});
-
 }
 
 renderTable(results);
@@ -439,7 +448,6 @@ html+=`<tr class="${color}">
 <td>${r.fecha}</td>
 <td>${r.tiers}</td>
 </tr>`;
-
 }
 
 html+=`</tbody></table>
