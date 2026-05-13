@@ -5,12 +5,15 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Sistema Autosilo</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet"/>
+<!-- LIBRERIAS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js"></script>
 
 <style>
+
 :root{
   --primary-blue:#0078c8;
   --primary-dark:#005a9e;
@@ -20,15 +23,16 @@
 
 body{
   margin:0;
-  font-family:"Segoe UI",Arial;
+  font-family:Segoe UI, Arial, sans-serif;
   background:var(--light-bg);
   color:#2b2b2b;
 }
 
-/* BARRA SUPERIOR */
+/* TOPBAR */
+
 .topbar{
   background:var(--primary-blue);
-  color:#fff;
+  color:white;
   padding:12px 30px;
   font-size:18px;
   font-weight:600;
@@ -39,7 +43,7 @@ body{
 }
 
 .backBtn{
-  background:#fff;
+  background:white;
   color:#0078c8;
   border:none;
   padding:6px 12px;
@@ -52,11 +56,12 @@ body{
   background:#f2f2f2;
 }
 
-/* APP */
+/* CONTENEDOR */
+
 .container{
   max-width:1200px;
   margin:30px auto;
-  background:#fff;
+  background:white;
   padding:25px;
   border-radius:6px;
   box-shadow:0 5px 20px rgba(0,0,0,.08);
@@ -70,6 +75,7 @@ h1{
 }
 
 /* CONTROLES */
+
 .controls{
   display:flex;
   gap:12px;
@@ -81,7 +87,7 @@ h1{
   background:var(--primary-blue);
   border:none;
   padding:10px 16px;
-  color:#fff;
+  color:white;
   font-weight:600;
   border-radius:4px;
   cursor:pointer;
@@ -98,35 +104,8 @@ h1{
   align-self:center;
 }
 
-/* BOTON PROCESAR */
-#btnProcesar{
-  display:none;
-}
-
-/* PANELES */
-.panel{
-  background:#f9fbfd;
-  border:1px solid var(--border-grey);
-  padding:12px;
-  border-radius:4px;
-  margin-top:15px;
-}
-
-.panel strong{
-  color:var(--primary-dark);
-}
-
-pre{
-  background:#fff;
-  border:1px solid var(--border-grey);
-  padding:10px;
-  border-radius:4px;
-  max-height:250px;
-  overflow:auto;
-  font-size:12px;
-}
-
 /* TABLA */
+
 table{
   width:100%;
   border-collapse:collapse;
@@ -136,7 +115,7 @@ table{
 
 th{
   background:var(--primary-blue);
-  color:#fff;
+  color:white;
   padding:10px;
   text-align:left;
 }
@@ -146,23 +125,42 @@ td{
   border-bottom:1px solid var(--border-grey);
 }
 
-tr.green{ background:#e6f4ea; }
-tr.orange{ background:#fff3cd; }
-tr.red{ background:#f8d7da; }
+tr.green{
+  background:#e6f4ea;
+}
+
+tr.orange{
+  background:#fff3cd;
+}
+
+tr.red{
+  background:#f8d7da;
+}
 
 tr:hover{
   background:#eef5fb;
 }
+
+/* BOTON PROCESAR */
+
+#btnProcesar{
+  display:none;
+}
+
 </style>
 </head>
 
 <body>
 
 <div class="topbar">
+
   <div>Sistema Operativo Interno</div>
-  <button class="backBtn" onclick="window.location.href='../menu.html'">
-    Volver
+
+  <button class="backBtn"
+  onclick="window.location.href='../menu.html'">
+  Volver
   </button>
+
 </div>
 
 <div class="container">
@@ -172,40 +170,37 @@ tr:hover{
 <div class="controls">
 
   <button class="button" id="btnMaestro">
-    Subir Archivo Maestro
+  Subir Archivo Maestro
   </button>
 
-  <input type="file" id="fileMaestro" accept=".xlsx" style="display:none">
+  <input
+  type="file"
+  id="fileMaestro"
+  accept=".xlsx"
+  style="display:none">
 
   <div class="filename" id="nombreMaestro">
-    Ningún archivo maestro
+  Ningún archivo maestro
   </div>
 
   <button class="button" id="btnDiario">
-    Subir Archivo Diario
+  Subir Archivo Diario
   </button>
 
-  <input type="file" id="fileDiario" accept=".pdf" style="display:none">
+  <input
+  type="file"
+  id="fileDiario"
+  accept=".pdf"
+  style="display:none">
 
   <div class="filename" id="nombreDiario">
-    Ningún archivo diario
+  Ningún archivo diario
   </div>
 
   <button class="button" id="btnProcesar">
-    Procesar Datos
+  Procesar Datos
   </button>
 
-</div>
-
-<!-- DEBUG OCULTO -->
-<div class="panel" style="display:none;">
-  <strong>Estado:</strong>
-  <div id="log"></div>
-</div>
-
-<div class="panel" style="display:none;">
-  <strong>Depuración PDF</strong>
-  <pre id="previewPDF"></pre>
 </div>
 
 <div id="resultado"></div>
@@ -213,6 +208,8 @@ tr:hover{
 </div>
 
 <script>
+
+/* ELEMENTOS */
 
 const fileMaestro=document.getElementById('fileMaestro');
 const fileDiario=document.getElementById('fileDiario');
@@ -224,9 +221,9 @@ const btnMaestro=document.getElementById('btnMaestro');
 const btnDiario=document.getElementById('btnDiario');
 const btnProcesar=document.getElementById('btnProcesar');
 
-const log=document.getElementById('log');
-const previewPDF=document.getElementById('previewPDF');
 const resultado=document.getElementById('resultado');
+
+/* VARIABLES */
 
 let maestroData=[];
 let diarioFilas=[];
@@ -234,21 +231,18 @@ let diarioFilas=[];
 let maestroCargado=false;
 let diarioCargado=false;
 
-/* LOG */
-
-function addLog(m){
-  log.innerText=m;
-  console.log(m);
-}
-
 /* MOSTRAR BOTON */
 
 function comprobarArchivos(){
 
   if(maestroCargado && diarioCargado){
+
     btnProcesar.style.display="inline-block";
+
   }else{
+
     btnProcesar.style.display="none";
+
   }
 
 }
@@ -278,7 +272,7 @@ fileMaestro.onchange=async(e)=>{
 
     const file=e.target.files[0];
 
-    if(!file)return;
+    if(!file) return;
 
     maestroCargado=true;
 
@@ -312,19 +306,28 @@ fileMaestro.onchange=async(e)=>{
       }
 
       return{
+
         destinatario:obj.destinatario || obj.nombre || "",
+
         direccion:obj.direccion || "",
-        codlocalidad:obj.codigopostalylocalidad || obj.cpylocalidad || "",
+
+        codlocalidad:
+        obj.codigopostalylocalidad ||
+        obj.cpylocalidad ||
+        "",
+
         tiers:obj.tiers || ""
+
       };
 
     });
 
-    addLog(`Excel maestro leído (${maestroData.length} filas)`);
+    console.log("MAESTRO:",maestroData);
 
   }catch(error){
 
     console.error(error);
+
     alert("Error leyendo archivo maestro");
 
   }
@@ -339,7 +342,7 @@ fileDiario.onchange=async(e)=>{
 
     const file=e.target.files[0];
 
-    if(!file)return;
+    if(!file) return;
 
     diarioCargado=true;
 
@@ -349,19 +352,12 @@ fileDiario.onchange=async(e)=>{
 
     diarioFilas=await extraerFilasPDF(file);
 
-    previewPDF.textContent=
-      "Filas detectadas:\n"+
-      diarioFilas.map(f=>
-        f.destinatario+" | "+f.cp+" | "+f.localidad
-      ).join("\n");
-
-    console.log(diarioFilas);
-
-    addLog(`PDF leído (${diarioFilas.length} filas)`);
+    console.log("PDF:",diarioFilas);
 
   }catch(error){
 
     console.error(error);
+
     alert("Error leyendo PDF");
 
   }
@@ -370,7 +366,21 @@ fileDiario.onchange=async(e)=>{
 
 /* PROCESAR */
 
-btnProcesar.onclick=()=>procesar();
+btnProcesar.onclick=()=>{
+
+  try{
+
+    procesar();
+
+  }catch(error){
+
+    console.error(error);
+
+    alert("Error procesando datos");
+
+  }
+
+};
 
 /* EXTRAER PDF */
 
@@ -392,10 +402,15 @@ async function extraerFilasPDF(file){
     const content=await page.getTextContent();
 
     items=items.concat(
+
       content.items.map(it=>({
+
         str:it.str || "",
+
         y:Math.floor(it.transform[5])
+
       }))
+
     );
 
   }
@@ -405,7 +420,9 @@ async function extraerFilasPDF(file){
   items.forEach(it=>{
 
     if(!lineas[it.y]){
+
       lineas[it.y]=[];
+
     }
 
     lineas[it.y].push(it.str);
@@ -413,25 +430,12 @@ async function extraerFilasPDF(file){
   });
 
   const filas=Object.keys(lineas)
+
   .sort((a,b)=>b-a)
+
   .map(y=>lineas[y].join(' ').trim())
+
   .filter(t=>t.length>0);
-
-  let start=filas.findIndex(l=>
-    l.toUpperCase().includes("DESTINATARIO")
-  );
-
-  let end=filas.findIndex(l=>
-    l.toUpperCase().startsWith("TOTAL")
-  );
-
-  if(start!==-1 && end!==-1){
-    filas.splice(end);
-  }
-
-  if(start>0){
-    filas.splice(0,start+1);
-  }
 
   const regex=/([A-Z0-9&\.\s\-\/ÑÁÉÍÓÚÜÇ,]+)\s+(\d{4,5})\s*-\s*([A-Za-zÁÉÍÓÚÜñçÇ'\.\s\-]+)/;
 
@@ -444,9 +448,13 @@ async function extraerFilasPDF(file){
     if(m){
 
       resultados.push({
+
         destinatario:(m[1] || "").trim(),
+
         cp:(m[2] || "").trim(),
+
         localidad:(m[3] || "").trim()
+
       });
 
     }
@@ -457,113 +465,124 @@ async function extraerFilasPDF(file){
 
 }
 
-/* MATCH */
+/* PROCESAR DATOS */
 
 function procesar(){
 
-  try{
+  if(!maestroData.length){
 
-    if(!maestroData.length || !diarioFilas.length){
+    alert("No se ha cargado el maestro");
 
-      addLog("Faltan archivos o no se detectaron filas");
-
-      alert("No se han detectado datos válidos");
-
-      return;
-
-    }
-
-    console.log(diarioFilas);
-
-    const fuse=new Fuse(maestroData,{
-      keys:['destinatario','direccion','codlocalidad'],
-      threshold:0.35
-    });
-
-    const resultados=diarioFilas.map(d=>{
-
-      const exact=maestroData.find(m=>
-
-        (m.destinatario || "")
-        .toLowerCase()
-        .includes(
-          (d.destinatario || "")
-          .toLowerCase()
-        )
-
-        &&
-
-        (m.codlocalidad || "")
-        .includes(d.cp || "")
-
-      );
-
-      if(exact){
-
-        return{
-          destinatario:d.destinatario || "-",
-          tiers:exact.tiers || "No encontrado",
-          tipo:'exact'
-        };
-
-      }
-
-      const fuzzy=fuse.search(d.destinatario || "");
-
-      if(fuzzy.length>0 && fuzzy[0].item){
-
-        const top=fuzzy[0].item;
-
-        return{
-          destinatario:d.destinatario || "-",
-          tiers:top.tiers || "No encontrado",
-          tipo:'fuzzy'
-        };
-
-      }
-
-      return{
-        destinatario:d.destinatario || "-",
-        tiers:'No encontrado',
-        tipo:'none'
-      };
-
-    });
-
-    mostrarTabla(resultados);
-
-    addLog("Tabla generada correctamente");
-
-  }catch(error){
-
-    console.error(error);
-
-    alert("Error procesando datos");
+    return;
 
   }
 
+  if(!diarioFilas.length){
+
+    alert("No se detectaron filas del PDF");
+
+    return;
+
+  }
+
+  const fuse=new Fuse(maestroData,{
+
+    keys:[
+      'destinatario',
+      'direccion',
+      'codlocalidad'
+    ],
+
+    threshold:0.35
+
+  });
+
+  const resultados=diarioFilas.map(d=>{
+
+    const exact=maestroData.find(m=>
+
+      normalizeText(m.destinatario)
+      .includes(
+        normalizeText(d.destinatario)
+      )
+
+      &&
+
+      normalizeText(m.codlocalidad)
+      .includes(
+        normalizeText(d.cp)
+      )
+
+    );
+
+    if(exact){
+
+      return{
+
+        destinatario:d.destinatario,
+
+        tiers:exact.tiers || "No encontrado",
+
+        tipo:'exact'
+
+      };
+
+    }
+
+    const fuzzy=fuse.search(d.destinatario || "");
+
+    if(fuzzy.length>0){
+
+      const top=fuzzy[0].item;
+
+      return{
+
+        destinatario:d.destinatario,
+
+        tiers:top.tiers || "No encontrado",
+
+        tipo:'fuzzy'
+
+      };
+
+    }
+
+    return{
+
+      destinatario:d.destinatario,
+
+      tiers:"No encontrado",
+
+      tipo:'none'
+
+    };
+
+  });
+
+  mostrarTabla(resultados);
+
 }
 
-/* TABLA */
+/* MOSTRAR TABLA */
 
 function mostrarTabla(datos){
 
-  let html='';
-
-  html+=`
+  let html=`
   <table>
+
   <thead>
   <tr>
     <th>Destinatario</th>
     <th>Tiers</th>
   </tr>
   </thead>
+
   <tbody>
   `;
 
   datos.forEach(r=>{
 
-    const c=
+    const clase=
       r.tipo==='exact'
       ?'green'
       :r.tipo==='fuzzy'
@@ -571,7 +590,7 @@ function mostrarTabla(datos){
       :'red';
 
     html+=`
-    <tr class="${c}">
+    <tr class="${clase}">
       <td>${r.destinatario}</td>
       <td>${r.tiers}</td>
     </tr>
