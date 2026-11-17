@@ -45,7 +45,7 @@ body{
   cursor:pointer;
 }
 .container{
-  max-width:1400px;
+  max-width:1450px;
   margin:30px auto;
   padding:25px;
   background:white;
@@ -83,12 +83,8 @@ h1{
   opacity:.5;
   cursor:not-allowed;
 }
-.btn.secondary{
-  background:#596979;
-}
-.btn.export{
-  background:#16834a;
-}
+.btn.secondary{background:#596979}
+.btn.export{background:#16834a}
 input[type=file]{display:none}
 .file-name{
   color:#555;
@@ -151,7 +147,7 @@ table{
   width:100%;
   border-collapse:collapse;
   font-size:13px;
-  min-width:1050px;
+  min-width:1350px;
 }
 th{
   background:var(--blue);
@@ -168,7 +164,7 @@ tr.review{background:#fff3cd}
 tr.complete{background:#e6f4ea}
 td input{
   width:100%;
-  min-width:85px;
+  min-width:90px;
   border:1px solid #ccd5de;
   border-radius:4px;
   padding:7px;
@@ -179,6 +175,7 @@ td input:focus{
   outline:2px solid #83bde5;
   border-color:var(--blue);
 }
+td input.wide{min-width:180px}
 .page-cell{
   white-space:nowrap;
   color:#667;
@@ -232,8 +229,8 @@ td input:focus{
 
   <p class="description">
     Sube el PDF completo de recogidas de Inlet. El sistema analizará los
-    albaranes escaneados mediante OCR, extraerá sus datos y permitirá
-    revisarlos antes de generar el Excel.
+    albaranes escaneados, extraerá sus datos y permitirá revisarlos
+    antes de generar el Excel.
   </p>
 
   <div class="controls">
@@ -311,6 +308,7 @@ pdfInput.addEventListener("change", () => {
   resultados = [];
   resultsContainer.innerHTML = "";
   exportBtn.disabled = true;
+
   document.getElementById("summary").style.display = "none";
   document.getElementById("legend").style.display = "none";
   hideMessage();
@@ -333,15 +331,18 @@ function mostrarMensaje(texto, tipo="info") {
   message.className = "message " + tipo;
   message.textContent = texto;
 }
+
 function hideMessage() {
   message.className = "message";
   message.textContent = "";
 }
+
 function actualizarProgreso(porcentaje, texto) {
   statusBox.style.display = "block";
   progressBar.style.width = Math.max(0, Math.min(100, porcentaje)) + "%";
   progressText.textContent = texto;
 }
+
 function normalizar(texto) {
   return String(texto || "")
     .normalize("NFD")
@@ -350,6 +351,7 @@ function normalizar(texto) {
     .replace(/\s+/g, " ")
     .trim();
 }
+
 function limpiarTextoOCR(texto) {
   return String(texto || "")
     .replace(/\r/g, "\n")
@@ -357,6 +359,7 @@ function limpiarTextoOCR(texto) {
     .replace(/\n{2,}/g, "\n")
     .trim();
 }
+
 function escaparHTML(valor) {
   return String(valor ?? "")
     .replace(/&/g, "&amp;")
@@ -366,13 +369,15 @@ function escaparHTML(valor) {
     .replace(/'/g, "&#039;");
 }
 
-/* CREAR RECORTE DE UNA PÁGINA */
+/* CREAR RECORTES */
 function crearRecorte(canvas, x, y, ancho, alto) {
   const recorte = document.createElement("canvas");
+
   recorte.width = Math.max(1, Math.floor(canvas.width * ancho));
   recorte.height = Math.max(1, Math.floor(canvas.height * alto));
 
   const ctx = recorte.getContext("2d");
+
   ctx.drawImage(
     canvas,
     Math.floor(canvas.width * x),
@@ -388,57 +393,116 @@ function crearRecorte(canvas, x, y, ancho, alto) {
   return recorte;
 }
 
-/* OCR DE UN RECORTE */
-async function reconocer(recorte) {
+/* OCR */
+async function reconocer(recorte, modo="6") {
+  await ocrWorker.setParameters({
+    tessedit_pageseg_mode: modo
+  });
+
   const resultado = await ocrWorker.recognize(recorte);
   return limpiarTextoOCR(resultado.data.text || "");
 }
 
-/* EXTRAER NÚMERO DE SALIDA */
+/* NÚMERO DE SALIDA */
 function extraerNumeroSalida(texto) {
-  const limpio = texto
+  const limpio = String(texto || "")
     .toUpperCase()
     .replace(/\s+/g, " ")
     .replace(/S A L/g, "SAL");
 
   const match = limpio.match(/SAL\s*[-:]?\s*(\d{6,})/);
+
   return match ? "SAL" + match[1] : "";
 }
 
-/* EXTRAER DESTINATARIO */
-function extraerDestinatario(texto) {
+/* DESTINATARIO: NOMBRE, DIRECCIÓN Y LOCALIDAD */
+function extraerDatosDestinatario(texto) {
   const lineas = limpiarTextoOCR(texto)
     .split("\n")
     .map(l => l.trim())
     .filter(Boolean);
 
   let indice = lineas.findIndex(l =>
-    normalizar(l).includes("destinatario")
+    /destinatario/i.test(l)
   );
 
-  if (indice >= 0) {
-    for (let i = indice + 1; i < lineas.length; i++) {
-      const linea = lineas[i];
-
-      if (/^(avda|avenida|calle|c\/|tel|telf|telefono|nif|cif|fax)\b/i.test(linea)) {
-        continue;
-      }
-
-      if (normalizar(linea).includes("propietario")) break;
-
-      if (linea.length > 2) {
-        return limpiarNombre(linea);
-      }
-    }
+  if (indice < 0) {
+    return {
+      destinatario:"",
+      direccion:"",
+      codigoPostal:"",
+      localidad:""
+    };
   }
 
-  /* Alternativa si el OCR no reconoce la palabra Destinatario */
-  const candidatos = lineas.filter(l =>
-    l.length > 3 &&
-    !/inletpack|propietario|avenida|avda|calle|tel[eé]fono|nif|cif/i.test(l)
-  );
+  const contenido = [];
 
-  return candidatos.length ? limpiarNombre(candidatos[0]) : "";
+  for (let i = indice + 1; i < lineas.length; i++) {
+    const linea = lineas[i];
+
+    if (/^(tel|telf|telefono|nif|cif|fax)\b/i.test(linea)) {
+      break;
+    }
+
+    if (/propietario/i.test(linea)) break;
+
+    if (linea.length > 1) contenido.push(linea);
+  }
+
+  if (!contenido.length) {
+    return {
+      destinatario:"",
+      direccion:"",
+      codigoPostal:"",
+      localidad:""
+    };
+  }
+
+  const destinatario = limpiarNombre(contenido[0]);
+
+  let direccionPartes = [];
+  let codigoPostal = "";
+  let localidad = "";
+
+  for (let i = 1; i < contenido.length; i++) {
+    const linea = contenido[i];
+
+    const cpMatch = linea.match(/\b(\d{5})\b/);
+
+    if (cpMatch) {
+      codigoPostal = cpMatch[1];
+
+      localidad = linea
+        .replace(cpMatch[0], "")
+        .replace(/[,;]\s*$/, "")
+        .trim();
+
+      /* Añadir la siguiente línea si es una continuación geográfica */
+      if (
+        contenido[i + 1] &&
+        !/^(tel|telf|telefono|nif|cif|fax)\b/i.test(contenido[i + 1])
+      ) {
+        const siguiente = contenido[i + 1];
+
+        if (
+          /españa|espana|castell[oó]n|valencia|alicante|madrid|barcelona|gipuzkoa|guipuzcoa|navarra/i.test(siguiente)
+        ) {
+          localidad += " " + siguiente;
+        }
+      }
+
+      break;
+    }
+
+    direccionPartes.push(linea);
+  }
+
+  return {
+    destinatario,
+    direccion: direccionPartes.join(" ").trim(),
+    codigoPostal,
+    localidad
+  };
 }
 
 function limpiarNombre(texto) {
@@ -448,18 +512,29 @@ function limpiarNombre(texto) {
     .trim();
 }
 
-/* EXTRAER PALETS */
+/* PALETS */
 function extraerPalets(texto) {
-  const limpio = texto.toUpperCase().replace(/\s+/g, " ");
-  const match = limpio.match(/(\d{1,3})\s*PALETS?/);
+  const limpio = String(texto || "")
+    .toUpperCase()
+    .replace(/\s+/g, " ");
 
-  return match ? match[1] : "";
+  const patrones = [
+    /ORDEN\s+DE\s+CARGA.{0,100}?(\d{1,3})\s*PALETS?/i,
+    /ORDEN\s+DE\s+CARGA.{0,100}?(\d{1,3})\s*PALET\b/i,
+    /(\d{1,3})\s*PALETS?/i
+  ];
+
+  for (const patron of patrones) {
+    const match = limpio.match(patron);
+    if (match) return match[1];
+  }
+
+  return "";
 }
 
-/* EXTRAER FECHA DE ENTREGA
-   No se utiliza "Fecha carga" como sustituto. */
+/* FECHA DE ENTREGA */
 function extraerFechaEntrega(texto) {
-  const limpio = texto
+  const limpio = String(texto || "")
     .replace(/\n/g, " ")
     .replace(/\s+/g, " ");
 
@@ -469,7 +544,6 @@ function extraerFechaEntrega(texto) {
 
   if (match) return normalizarFecha(match[1]);
 
-  /* Caso en que el OCR separa el rótulo y la fecha */
   const lineas = limpiarTextoOCR(texto).split("\n");
 
   for (let i = 0; i < lineas.length; i++) {
@@ -477,12 +551,14 @@ function extraerFechaEntrega(texto) {
       const mismaLinea = lineas[i].match(
         /(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/
       );
+
       if (mismaLinea) return normalizarFecha(mismaLinea[1]);
 
       if (lineas[i + 1]) {
         const siguiente = lineas[i + 1].match(
           /(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/
         );
+
         if (siguiente) return normalizarFecha(siguiente[1]);
       }
     }
@@ -495,38 +571,41 @@ function normalizarFecha(fecha) {
   return String(fecha).replace(/[.-]/g, "/");
 }
 
-/* EXTRAER CAJAS Y KILOS BRUTOS
-   En la fila Total, el primer número corresponde a Cajas
-   y el último número corresponde a Kg brutos. */
+/* TOTALES DE TABLA */
 function extraerTotales(texto) {
   const lineas = limpiarTextoOCR(texto)
     .split("\n")
     .map(l => l.trim())
     .filter(Boolean);
 
-  let lineaTotal = lineas.find(l => /^total\b/i.test(l));
+  let lineaTotal = lineas.find(l =>
+    /^\s*total\b/i.test(l)
+  );
 
   if (!lineaTotal) {
-    lineaTotal = lineas.find(l => /\btotal\b/i.test(l));
+    lineaTotal = lineas.find(l =>
+      /\btotal\b/i.test(l)
+    );
   }
 
   if (!lineaTotal) {
-    return { cajas: "", kilosBrutos: "" };
+    return { cajas:"", kilosBrutos:"" };
   }
 
-  const parteNumerica = lineaTotal.replace(/^.*?\btotal\b/i, "");
+  const parteNumerica = lineaTotal
+    .replace(/^.*?\btotal\b/i, "");
 
   const numeros = parteNumerica.match(
     /\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?/g
   ) || [];
 
   if (numeros.length < 2) {
-    return { cajas: "", kilosBrutos: "" };
+    return { cajas:"", kilosBrutos:"" };
   }
 
   return {
-    cajas: limpiarNumeroOCR(numeros[0]),
-    kilosBrutos: limpiarNumeroOCR(numeros[numeros.length - 1])
+    cajas:limpiarNumeroOCR(numeros[0]),
+    kilosBrutos:limpiarNumeroOCR(numeros[numeros.length - 1])
   };
 }
 
@@ -536,15 +615,28 @@ function limpiarNumeroOCR(valor) {
     .trim();
 }
 
-/* DETECTAR SI LA PÁGINA ES LA PRIMERA DE UN ALBARÁN */
-function esPrimeraPagina(textoCabecera) {
-  const t = normalizar(textoCabecera);
+/* BUSCAR PALLETS EN OBSERVACIONES */
+function buscarPaletsObservaciones(texto) {
+  const limpio = String(texto || "")
+    .toUpperCase()
+    .replace(/\s+/g, " ");
 
-  return (
-    /albaran\s+de\s+salida/.test(t) ||
-    /n[oº°]?\s*salida/.test(t) ||
-    /sal\s*20\d{6,}/i.test(textoCabecera)
-  );
+  const patrones = [
+    /COMENTARIOS?\s+DE\s+CARGA.{0,80}?(\d{1,3})\s*PALETS?/i,
+    /COMENTARIOS?\s+DE\s+CARGA.{0,80}?(\d{1,3})\s*PALET\b/i
+  ];
+
+  for (const patron of patrones) {
+    const match = limpio.match(patron);
+    if (match) return match[1];
+  }
+
+  return "";
+}
+
+/* DETECCIÓN DE PÁGINA INICIAL */
+function esPrimeraPagina(texto) {
+  return Boolean(extraerNumeroSalida(texto));
 }
 
 /* PROCESAR PDF */
@@ -563,90 +655,129 @@ async function procesarPDF() {
     actualizarProgreso(0, "Cargando PDF...");
 
     const pdfData = new Uint8Array(await selectedFile.arrayBuffer());
-    const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+    const pdf = await pdfjsLib.getDocument({ data:pdfData }).promise;
 
-    /* Crear motor OCR en español */
     statusTitle.textContent = "Preparando reconocimiento de texto";
+
     ocrWorker = await Tesseract.createWorker("spa");
 
-    const encontrados = new Set();
-    let paginasAlbaran = 0;
-    let paginasNoIdentificadas = 0;
+    let albaranActual = null;
 
     for (let numeroPagina = 1; numeroPagina <= pdf.numPages; numeroPagina++) {
-      const porcentaje = ((numeroPagina - 1) / pdf.numPages) * 100;
-
       actualizarProgreso(
-        porcentaje,
+        ((numeroPagina - 1) / pdf.numPages) * 100,
         `Analizando página ${numeroPagina} de ${pdf.numPages}...`
       );
 
       const page = await pdf.getPage(numeroPagina);
-      const viewport = page.getViewport({ scale: 2.5 });
+      const viewport = page.getViewport({ scale:3 });
 
       const canvas = document.createElement("canvas");
       canvas.width = Math.floor(viewport.width);
       canvas.height = Math.floor(viewport.height);
 
-      const context = canvas.getContext("2d", { willReadFrequently: true });
+      const context = canvas.getContext("2d", {
+        willReadFrequently:true
+      });
 
       await page.render({
-        canvasContext: context,
-        viewport: viewport
+        canvasContext:context,
+        viewport:viewport
       }).promise;
 
       /*
-       * Zona superior central: título, número de salida,
-       * orden de carga y posibles fechas.
+       * LECTURA AMPLIA DE CABECERA:
+       * número de salida, orden de carga y posible fecha.
        */
-      const cabecera = crearRecorte(canvas, 0.035, 0.235, 0.94, 0.145);
-      const textoCabecera = await reconocer(cabecera);
+      const zonaCabecera = crearRecorte(
+        canvas, 0.035, 0.235, 0.94, 0.17
+      );
+
+      const textoCabecera = await reconocer(zonaCabecera, "6");
 
       const numeroSalida = extraerNumeroSalida(textoCabecera);
 
-      if (!numeroSalida || !esPrimeraPagina(textoCabecera)) {
-        paginasNoIdentificadas++;
-        continue;
-      }
-
-      /* Evitar duplicar un mismo número de salida */
-      if (encontrados.has(numeroSalida)) {
-        continue;
-      }
-
-      encontrados.add(numeroSalida);
-      paginasAlbaran++;
-
       /*
-       * Zona derecha: bloque Destinatario.
+       * DESTINATARIO:
+       * bloque derecho, incluyendo nombre, dirección y CP.
        */
       const zonaDestinatario = crearRecorte(
-        canvas, 0.55, 0.135, 0.43, 0.145
+        canvas, 0.54, 0.135, 0.445, 0.17
       );
-      const textoDestinatario = await reconocer(zonaDestinatario);
+
+      const textoDestinatario = await reconocer(zonaDestinatario, "6");
 
       /*
-       * Zona inferior: fila Total de la tabla.
+       * TABLA:
+       * leer una zona grande para encontrar Total
+       * aunque la tabla termine a distinta altura.
        */
-      const zonaTotales = crearRecorte(
-        canvas, 0.035, 0.825, 0.92, 0.085
+      const zonaTabla = crearRecorte(
+        canvas, 0.035, 0.35, 0.93, 0.57
       );
-      const textoTotales = await reconocer(zonaTotales);
 
-      const destinatario = extraerDestinatario(textoDestinatario);
-      const palets = extraerPalets(textoCabecera);
-      const fechaEntrega = extraerFechaEntrega(textoCabecera);
-      const totales = extraerTotales(textoTotales);
+      const textoTabla = await reconocer(zonaTabla, "6");
 
-      resultados.push({
-        destinatario,
-        cajas: totales.cajas,
-        kilosBrutos: totales.kilosBrutos,
-        palets,
-        numeroSalida,
-        fechaEntrega,
-        pagina: numeroPagina
-      });
+      /*
+       * Si es una nueva salida, crear registro.
+       */
+      if (numeroSalida) {
+        const datosDestinatario =
+          extraerDatosDestinatario(textoDestinatario);
+
+        const totales = extraerTotales(textoTabla);
+
+        let palets = extraerPalets(textoCabecera);
+
+        if (!palets) {
+          palets = buscarPaletsObservaciones(textoTabla);
+        }
+
+        albaranActual = {
+          destinatario:datosDestinatario.destinatario,
+          direccion:datosDestinatario.direccion,
+          codigoPostal:datosDestinatario.codigoPostal,
+          localidad:datosDestinatario.localidad,
+          cajas:totales.cajas,
+          kilosBrutos:totales.kilosBrutos,
+          palets,
+          numeroSalida,
+          fechaEntrega:extraerFechaEntrega(textoCabecera),
+          pagina:numeroPagina
+        };
+
+        const existente = resultados.find(
+          r => r.numeroSalida === numeroSalida
+        );
+
+        if (!existente) {
+          resultados.push(albaranActual);
+        } else {
+          albaranActual = existente;
+        }
+      }
+
+      /*
+       * Si es continuación de un albarán anterior,
+       * aprovechar la tabla de esa página para completar
+       * los totales que falten.
+       */
+      else if (albaranActual) {
+        const totales = extraerTotales(textoTabla);
+
+        if (!albaranActual.cajas && totales.cajas) {
+          albaranActual.cajas = totales.cajas;
+        }
+
+        if (!albaranActual.kilosBrutos && totales.kilosBrutos) {
+          albaranActual.kilosBrutos = totales.kilosBrutos;
+        }
+
+        if (!albaranActual.palets) {
+          const palets = buscarPaletsObservaciones(textoTabla);
+          if (palets) albaranActual.palets = palets;
+        }
+      }
 
       actualizarProgreso(
         (numeroPagina / pdf.numPages) * 100,
@@ -659,7 +790,7 @@ async function procesarPDF() {
 
     if (!resultados.length) {
       throw new Error(
-        "No se han detectado números de salida. Comprueba que el PDF tenga el formato habitual de Inlet."
+        "No se han detectado números de salida. Comprueba el formato del PDF."
       );
     }
 
@@ -694,10 +825,13 @@ async function procesarPDF() {
   }
 }
 
-/* COMPROBAR CAMPOS */
+/* ESTADO */
 function estaCompleto(r) {
   return Boolean(
     r.destinatario &&
+    r.direccion &&
+    r.codigoPostal &&
+    r.localidad &&
     r.cajas &&
     r.kilosBrutos &&
     r.palets &&
@@ -705,7 +839,7 @@ function estaCompleto(r) {
   );
 }
 
-/* MOSTRAR TABLA EDITABLE */
+/* TABLA EDITABLE */
 function renderizarResultados() {
   let html = `
     <div class="table-wrap">
@@ -713,12 +847,15 @@ function renderizarResultados() {
       <thead>
         <tr>
           <th>Destinatario</th>
+          <th>Dirección</th>
+          <th>Código postal</th>
+          <th>Localidad</th>
           <th>Total cajas</th>
           <th>Kilos brutos</th>
           <th>Palets</th>
-          <th>Nº albarán / salida</th>
-          <th>Fecha de entrega</th>
-          <th>Página PDF</th>
+          <th>Nº albarán</th>
+          <th>Fecha entrega</th>
+          <th>Página</th>
           <th>Estado</th>
         </tr>
       </thead>
@@ -730,7 +867,10 @@ function renderizarResultados() {
 
     html += `
       <tr class="${completo ? "complete" : "review"}">
-        <td><input data-index="${index}" data-field="destinatario" value="${escaparHTML(r.destinatario)}"></td>
+        <td><input class="wide" data-index="${index}" data-field="destinatario" value="${escaparHTML(r.destinatario)}"></td>
+        <td><input class="wide" data-index="${index}" data-field="direccion" value="${escaparHTML(r.direccion)}"></td>
+        <td><input data-index="${index}" data-field="codigoPostal" value="${escaparHTML(r.codigoPostal)}"></td>
+        <td><input class="wide" data-index="${index}" data-field="localidad" value="${escaparHTML(r.localidad)}"></td>
         <td><input data-index="${index}" data-field="cajas" value="${escaparHTML(r.cajas)}"></td>
         <td><input data-index="${index}" data-field="kilosBrutos" value="${escaparHTML(r.kilosBrutos)}"></td>
         <td><input data-index="${index}" data-field="palets" value="${escaparHTML(r.palets)}"></td>
@@ -753,29 +893,36 @@ function renderizarResultados() {
 
       resultados[index][field] = event.target.value;
 
-      /* Actualizar el estado de la fila sin perder el foco */
       const fila = event.target.closest("tr");
       const completo = estaCompleto(resultados[index]);
 
       fila.className = completo ? "complete" : "review";
-      fila.lastElementChild.textContent = completo ? "Completo" : "Revisar";
+      fila.lastElementChild.textContent =
+        completo ? "Completo" : "Revisar";
 
       actualizarResumen();
     });
   });
 
   actualizarResumen();
+
   document.getElementById("legend").style.display = "flex";
   document.getElementById("summary").style.display = "flex";
 }
 
+/* RESUMEN */
 function actualizarResumen() {
   const completos = resultados.filter(estaCompleto).length;
   const revisar = resultados.length - completos;
 
-  document.getElementById("totalAlbaranes").textContent = resultados.length;
-  document.getElementById("completeCount").textContent = completos;
-  document.getElementById("reviewCount").textContent = revisar;
+  document.getElementById("totalAlbaranes").textContent =
+    resultados.length;
+
+  document.getElementById("completeCount").textContent =
+    completos;
+
+  document.getElementById("reviewCount").textContent =
+    revisar;
 }
 
 /* EXPORTAR EXCEL */
@@ -783,30 +930,45 @@ function exportarExcel() {
   if (!resultados.length) return;
 
   const filas = resultados.map(r => ({
-    "Destinatario": r.destinatario,
-    "Total cajas": r.cajas,
-    "Kilos brutos": r.kilosBrutos,
-    "Total palets": r.palets,
-    "Nº albarán": r.numeroSalida,
-    "Fecha de entrega": r.fechaEntrega
+    "Destinatario":r.destinatario,
+    "Dirección":r.direccion,
+    "Código postal":r.codigoPostal,
+    "Localidad":r.localidad,
+    "Total cajas":r.cajas,
+    "Kilos brutos":r.kilosBrutos,
+    "Total palets":r.palets,
+    "Nº albarán":r.numeroSalida,
+    "Fecha de entrega":r.fechaEntrega
   }));
 
   const worksheet = XLSX.utils.json_to_sheet(filas);
 
   worksheet["!cols"] = [
-    { wch: 35 },
-    { wch: 15 },
-    { wch: 18 },
-    { wch: 15 },
-    { wch: 22 },
-    { wch: 18 }
+    { wch:35 },
+    { wch:40 },
+    { wch:14 },
+    { wch:35 },
+    { wch:15 },
+    { wch:18 },
+    { wch:15 },
+    { wch:22 },
+    { wch:18 }
   ];
 
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Inlet Albaranes");
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    "Inlet Albaranes"
+  );
 
   const fecha = new Date().toISOString().slice(0, 10);
-  XLSX.writeFile(workbook, `INLET_ALBARANES_${fecha}.xlsx`);
+
+  XLSX.writeFile(
+    workbook,
+    `INLET_ALBARANES_${fecha}.xlsx`
+  );
 }
 
 /* LIMPIAR */
@@ -815,14 +977,19 @@ function limpiar() {
 
   selectedFile = null;
   resultados = [];
+
   pdfInput.value = "";
   fileName.textContent = "Ningún PDF seleccionado";
+
   processBtn.disabled = true;
   exportBtn.disabled = true;
+
   resultsContainer.innerHTML = "";
   statusBox.style.display = "none";
+
   document.getElementById("summary").style.display = "none";
   document.getElementById("legend").style.display = "none";
+
   hideMessage();
 }
 </script>
