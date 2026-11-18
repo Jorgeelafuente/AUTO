@@ -146,7 +146,7 @@ table{
   width:100%;
   border-collapse:collapse;
   font-size:13px;
-  min-width:1350px;
+  min-width:2050px;
 }
 th{
   background:var(--blue);
@@ -192,6 +192,29 @@ td input.wide{min-width:180px}
 }
 .legend .green{background:#e6f4ea}
 .legend .yellow{background:#fff3cd}
+.legend .orange{background:#ffe8cc}
+.legend .red{background:#f8d7da}
+td select{
+  width:100%;
+  min-width:220px;
+  border:1px solid #ccd5de;
+  border-radius:4px;
+  padding:7px;
+  font:inherit;
+  background:white;
+}
+.match-pill{
+  display:inline-block;
+  padding:5px 8px;
+  border-radius:4px;
+  font-size:12px;
+  font-weight:600;
+  white-space:nowrap;
+}
+.match-pill.exact{background:#d1e7dd;color:#0f5132}
+.match-pill.fuzzy{background:#ffe5c2;color:#854d0e}
+.match-pill.none{background:#f8d7da;color:#842029}
+.match-pill.manual{background:#dbeafe;color:#1e40af}
 .message{
   padding:12px;
   border-radius:5px;
@@ -227,17 +250,21 @@ td input.wide{min-width:180px}
   <h1>INLET ALBARANES</h1>
 
   <p class="description">
-    Sube el PDF completo de recogidas de Inlet. El sistema analizará los
-    albaranes escaneados, extraerá sus datos y permitirá revisarlos
-    antes de generar el Excel.
+    Sube el PDF de albaranes y el maestro Excel de destinatarios. El sistema
+    extraerá los datos del PDF y los vinculará con el maestro para recuperar
+    el código TIERS antes de generar el Excel.
   </p>
 
   <div class="controls">
-    <button class="btn" id="selectPdfBtn">Subir PDF de albaranes</button>
+    <button class="btn" id="selectPdfBtn">1. Subir PDF de albaranes</button>
     <input type="file" id="pdfInput" accept=".pdf,application/pdf">
     <span class="file-name" id="fileName">Ningún PDF seleccionado</span>
 
-    <button class="btn" id="processBtn" disabled>Procesar PDF</button>
+    <button class="btn" id="selectMasterBtn">2. Subir maestro destinatarios</button>
+    <input type="file" id="masterInput" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+    <span class="file-name" id="masterFileName">Ningún maestro seleccionado</span>
+
+    <button class="btn" id="processBtn" disabled>3. Procesar y vincular</button>
     <button class="btn export" id="exportBtn" disabled>Exportar Excel</button>
     <button class="btn secondary" id="resetBtn">Limpiar</button>
   </div>
@@ -263,7 +290,23 @@ td input.wide{min-width:180px}
     </div>
     <div class="summary-card">
       <strong id="reviewCount">0</strong>
-      <span>Para revisar</span>
+      <span>Para revisar datos extraídos</span>
+    </div>
+    <div class="summary-card">
+      <strong id="exactCount">0</strong>
+      <span>Vinculaciones exactas</span>
+    </div>
+    <div class="summary-card">
+      <strong id="fuzzyCount">0</strong>
+      <span>Vinculaciones aproximadas</span>
+    </div>
+    <div class="summary-card">
+      <strong id="noMatchCount">0</strong>
+      <span>Sin vinculación</span>
+    </div>
+    <div class="summary-card">
+      <strong id="manualCount">0</strong>
+      <span>Correcciones manuales</span>
     </div>
   </div>
 
@@ -271,7 +314,10 @@ td input.wide{min-width:180px}
 
   <div class="legend" id="legend" style="display:none">
     <span class="green">Datos completos</span>
-    <span class="yellow">Falta algún dato o requiere revisión</span>
+    <span class="yellow">Falta algún dato extraído</span>
+    <span class="green">Coincidencia exacta</span>
+    <span class="orange">Coincidencia aproximada (revisar)</span>
+    <span class="red">Sin coincidencia</span>
   </div>
 
 </div>
@@ -283,10 +329,13 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 /* ELEMENTOS */
 const pdfInput = document.getElementById("pdfInput");
 const selectPdfBtn = document.getElementById("selectPdfBtn");
+const masterInput = document.getElementById("masterInput");
+const selectMasterBtn = document.getElementById("selectMasterBtn");
 const processBtn = document.getElementById("processBtn");
 const exportBtn = document.getElementById("exportBtn");
 const resetBtn = document.getElementById("resetBtn");
 const fileName = document.getElementById("fileName");
+const masterFileName = document.getElementById("masterFileName");
 const statusBox = document.getElementById("statusBox");
 const statusTitle = document.getElementById("statusTitle");
 const progressText = document.getElementById("progressText");
@@ -295,29 +344,58 @@ const message = document.getElementById("message");
 const resultsContainer = document.getElementById("resultsContainer");
 
 let selectedFile = null;
+let selectedMasterFile = null;
+let maestroDestinatarios = [];
 let resultados = [];
 let ocrWorker = null;
 let procesando = false;
 
 /* EVENTOS */
 selectPdfBtn.addEventListener("click", () => pdfInput.click());
+selectMasterBtn.addEventListener("click", () => masterInput.click());
 
 pdfInput.addEventListener("change", () => {
   selectedFile = pdfInput.files[0] || null;
-  resultados = [];
-  resultsContainer.innerHTML = "";
-  exportBtn.disabled = true;
+  reiniciarResultados();
 
-  document.getElementById("summary").style.display = "none";
-  document.getElementById("legend").style.display = "none";
+  fileName.textContent = selectedFile
+    ? selectedFile.name
+    : "Ningún PDF seleccionado";
+
+  actualizarBotonProcesar();
   hideMessage();
+});
 
-  if (selectedFile) {
-    fileName.textContent = selectedFile.name;
-    processBtn.disabled = false;
-  } else {
-    fileName.textContent = "Ningún PDF seleccionado";
-    processBtn.disabled = true;
+masterInput.addEventListener("change", async () => {
+  selectedMasterFile = masterInput.files[0] || null;
+  maestroDestinatarios = [];
+  reiniciarResultados();
+  actualizarBotonProcesar();
+
+  if (!selectedMasterFile) {
+    masterFileName.textContent = "Ningún maestro seleccionado";
+    return;
+  }
+
+  masterFileName.textContent = selectedMasterFile.name;
+  selectMasterBtn.disabled = true;
+  mostrarMensaje("Leyendo el maestro de destinatarios...", "info");
+
+  try {
+    maestroDestinatarios = await leerMaestroDestinatarios(selectedMasterFile);
+    mostrarMensaje(
+      `Maestro cargado correctamente: ${maestroDestinatarios.length} destinatarios disponibles.`,
+      "info"
+    );
+  } catch (error) {
+    selectedMasterFile = null;
+    masterInput.value = "";
+    masterFileName.textContent = "Ningún maestro seleccionado";
+    maestroDestinatarios = [];
+    mostrarMensaje("No se ha podido cargar el maestro: " + error.message, "error");
+  } finally {
+    selectMasterBtn.disabled = false;
+    actualizarBotonProcesar();
   }
 });
 
@@ -336,6 +414,72 @@ function hideMessage() {
   message.textContent = "";
 }
 
+function actualizarBotonProcesar() {
+  processBtn.disabled = !(selectedFile && maestroDestinatarios.length && !procesando);
+}
+
+function reiniciarResultados() {
+  resultados = [];
+  resultsContainer.innerHTML = "";
+  exportBtn.disabled = true;
+  statusBox.style.display = "none";
+  document.getElementById("summary").style.display = "none";
+  document.getElementById("legend").style.display = "none";
+}
+
+async function leerMaestroDestinatarios(archivo) {
+  const datos = new Uint8Array(await archivo.arrayBuffer());
+  const libro = XLSX.read(datos, { type:"array" });
+  const nombreHoja = libro.SheetNames.find(nombre =>
+    normalizar(nombre) === normalizar("TIERS DESTINO")
+  );
+
+  if (!nombreHoja) {
+    throw new Error('No se encuentra la hoja "TIERS DESTINO".');
+  }
+
+  const hoja = libro.Sheets[nombreHoja];
+  const filas = XLSX.utils.sheet_to_json(hoja, { header:1, defval:"", raw:false });
+
+  let filaCabecera = -1;
+  let colDestinatario = -1;
+  let colPoblacion = -1;
+  let colTiers = -1;
+
+  for (let i = 0; i < Math.min(filas.length, 10); i++) {
+    const cabeceras = filas[i].map(valor => normalizar(valor));
+    const d = cabeceras.indexOf("destinatario");
+    const p = cabeceras.findIndex(valor => valor === "poblacion" || valor === "población");
+    const t = cabeceras.indexOf("tiers");
+
+    if (d >= 0 && p >= 0 && t >= 0) {
+      filaCabecera = i;
+      colDestinatario = d;
+      colPoblacion = p;
+      colTiers = t;
+      break;
+    }
+  }
+
+  if (filaCabecera < 0) {
+    throw new Error('La hoja debe contener las columnas DESTINATARIO, POBLACIÓN y TIERS.');
+  }
+
+  const maestro = filas.slice(filaCabecera + 1)
+    .map(fila => ({
+      destinatario: String(fila[colDestinatario] ?? "").trim(),
+      poblacion: String(fila[colPoblacion] ?? "").trim(),
+      tiers: String(fila[colTiers] ?? "").trim()
+    }))
+    .filter(registro => registro.destinatario && registro.poblacion);
+
+  if (!maestro.length) {
+    throw new Error("No se han encontrado destinatarios con población en el maestro.");
+  }
+
+  return maestro;
+}
+
 function actualizarProgreso(porcentaje, texto) {
   statusBox.style.display = "block";
   progressBar.style.width = Math.max(0, Math.min(100, porcentaje)) + "%";
@@ -349,6 +493,127 @@ function normalizar(texto) {
     .toLowerCase()
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function distanciaLevenshtein(a, b) {
+  const matriz = Array.from({ length:b.length + 1 }, () => []);
+  for (let i = 0; i <= b.length; i++) matriz[i][0] = i;
+  for (let j = 0; j <= a.length; j++) matriz[0][j] = j;
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      matriz[i][j] = b[i - 1] === a[j - 1]
+        ? matriz[i - 1][j - 1]
+        : Math.min(
+            matriz[i - 1][j - 1] + 1,
+            matriz[i][j - 1] + 1,
+            matriz[i - 1][j] + 1
+          );
+    }
+  }
+  return matriz[b.length][a.length];
+}
+
+function calcularSimilitud(a, b) {
+  if (a === b) return 1;
+  if (!a || !b) return 0;
+  return 1 - distanciaLevenshtein(a, b) / Math.max(a.length, b.length);
+}
+
+function normalizarSegmentoLocalidad(texto) {
+  return normalizar(texto)
+    .replace(/\b\d{5}\b/g, " ")
+    .replace(/\b(españa|espana)\b/g, " ")
+    .replace(/[(),.;]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function puntuarPoblacion(localidadAlbaran, poblacionMaestro) {
+  const poblacion = normalizarSegmentoLocalidad(poblacionMaestro);
+  if (!poblacion) return 0;
+
+  const localidadCompleta = normalizarSegmentoLocalidad(localidadAlbaran);
+  if (!localidadCompleta) return 0;
+
+  // La población del maestro puede estar acompañada de provincia y país en el albarán.
+  const expresion = new RegExp("(^| )" + poblacion.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "( |$)");
+  if (expresion.test(localidadCompleta)) return 1;
+
+  const segmentos = String(localidadAlbaran || "")
+    .split(/[,;|]/)
+    .map(normalizarSegmentoLocalidad)
+    .filter(Boolean);
+
+  let mejor = calcularSimilitud(localidadCompleta, poblacion);
+  for (const segmento of segmentos) {
+    mejor = Math.max(mejor, calcularSimilitud(segmento, poblacion));
+  }
+  return mejor;
+}
+
+function buscarCoincidenciaDestinatario(registro) {
+  const nombreAlbaran = normalizar(registro.destinatario);
+  const localidadAlbaran = registro.localidad || "";
+  if (!nombreAlbaran || !localidadAlbaran) return null;
+
+  let mejor = null;
+
+  maestroDestinatarios.forEach((candidato, indice) => {
+    const similitudNombre = calcularSimilitud(
+      nombreAlbaran,
+      normalizar(candidato.destinatario)
+    );
+    const similitudPoblacion = puntuarPoblacion(
+      localidadAlbaran,
+      candidato.poblacion
+    );
+
+    if (similitudNombre < 0.80 || similitudPoblacion < 0.80) return;
+
+    const puntuacion = (similitudNombre * 0.7) + (similitudPoblacion * 0.3);
+    if (!mejor || puntuacion > mejor.puntuacion) {
+      mejor = {
+        indice,
+        candidato,
+        similitudNombre,
+        similitudPoblacion,
+        puntuacion,
+        exacta: similitudNombre === 1 && similitudPoblacion === 1
+      };
+    }
+  });
+
+  return mejor;
+}
+
+function aplicarCoincidencia(registro, coincidencia, manual=false) {
+  if (!coincidencia) {
+    registro.indiceMaestro = "";
+    registro.destinatarioMaestro = "";
+    registro.poblacionMaestro = "";
+    registro.tiers = "";
+    registro.estadoVinculacion = "SIN COINCIDENCIA";
+    registro.similitud = 0;
+    return;
+  }
+
+  const maestro = coincidencia.candidato || maestroDestinatarios[coincidencia.indice];
+  registro.indiceMaestro = String(coincidencia.indice);
+  registro.destinatarioMaestro = maestro.destinatario;
+  registro.poblacionMaestro = maestro.poblacion;
+  registro.tiers = maestro.tiers;
+  registro.similitud = manual ? null : (coincidencia.similitudNombre ?? 1);
+  registro.estadoVinculacion = manual
+    ? "MANUAL"
+    : (coincidencia.exacta ? "EXACTA" : "APROXIMADA");
+}
+
+function vincularDestinatarios() {
+  resultados.forEach(registro => {
+    const coincidencia = buscarCoincidenciaDestinatario(registro);
+    aplicarCoincidencia(registro, coincidencia);
+  });
 }
 
 function limpiarTextoOCR(texto) {
@@ -498,7 +763,7 @@ function extraerDatosDestinatario(texto) {
 
   return {
     destinatario,
-    direccion: direccionPartes.join(" ").trim(),
+    direccion:direccionPartes.join(" ").trim(),
     codigoPostal,
     localidad
   };
@@ -629,7 +894,7 @@ function limpiarNumeroOCR(valor) {
   return String(valor || "").replace(/[^\d.,]/g, "").trim();
 }
 
-/* BUSCAR PALLETS EN OBSERVACIONES */
+/* BUSCAR PALETS EN OBSERVACIONES */
 function buscarPaletsObservaciones(texto) {
   const limpio = String(texto || "")
     .toUpperCase()
@@ -655,7 +920,7 @@ function esPrimeraPagina(texto) {
 
 /* PROCESAR PDF */
 async function procesarPDF() {
-  if (!selectedFile || procesando) return;
+  if (!selectedFile || !maestroDestinatarios.length || procesando) return;
 
   procesando = true;
   processBtn.disabled = true;
@@ -818,13 +1083,19 @@ async function procesarPDF() {
       );
     }
 
+    // La vinculación se realiza después del OCR para no alterar la extracción original.
+    vincularDestinatarios();
     renderizarResultados();
 
-    actualizarProgreso(100, "Proceso finalizado.");
-    statusTitle.textContent = "OCR finalizado";
+    const exactas = resultados.filter(r => r.estadoVinculacion === "EXACTA").length;
+    const aproximadas = resultados.filter(r => r.estadoVinculacion === "APROXIMADA").length;
+    const sinCoincidencia = resultados.filter(r => r.estadoVinculacion === "SIN COINCIDENCIA").length;
+
+    actualizarProgreso(100, "Extracción y vinculación finalizadas.");
+    statusTitle.textContent = "Proceso finalizado";
 
     mostrarMensaje(
-      `Proceso terminado. Se han detectado ${resultados.length} albaranes.`,
+      `Proceso terminado: ${resultados.length} albaranes. ${exactas} coincidencias exactas, ${aproximadas} aproximadas y ${sinCoincidencia} sin coincidencia.`,
       "info"
     );
 
@@ -845,7 +1116,7 @@ async function procesarPDF() {
 
   } finally {
     procesando = false;
-    processBtn.disabled = !selectedFile;
+    actualizarBotonProcesar();
   }
 }
 
@@ -863,24 +1134,28 @@ function estaCompleto(r) {
   );
 }
 
-/* TABLA EDITABLE */
+/* TABLA EDITABLE Y VINCULACIÓN MANUAL */
 function renderizarResultados() {
   let html = `
     <div class="table-wrap">
     <table>
       <thead>
         <tr>
-          <th>Destinatario</th>
+          <th>Destinatario extraído</th>
           <th>Dirección</th>
           <th>Código postal</th>
-          <th>Localidad</th>
+          <th>Localidad extraída</th>
           <th>Total cajas</th>
           <th>Kilos brutos</th>
           <th>Palets</th>
           <th>Nº albarán</th>
           <th>Fecha entrega</th>
+          <th>Destinatario maestro (editable)</th>
+          <th>Población maestro</th>
+          <th>TIERS</th>
+          <th>Estado vinculación</th>
           <th>Página</th>
-          <th>Estado</th>
+          <th>Estado datos</th>
         </tr>
       </thead>
       <tbody>
@@ -888,6 +1163,17 @@ function renderizarResultados() {
 
   resultados.forEach((r, index) => {
     const completo = estaCompleto(r);
+    const estado = r.estadoVinculacion || "SIN COINCIDENCIA";
+    const claseEstado = estado === "EXACTA" ? "exact"
+      : estado === "APROXIMADA" ? "fuzzy"
+      : estado === "MANUAL" ? "manual" : "none";
+
+    const opcionesMaestro = [
+      `<option value="">-- Sin asignar --</option>`,
+      ...maestroDestinatarios.map((m, i) =>
+        `<option value="${i}" ${String(i) === String(r.indiceMaestro) ? "selected" : ""}>${escaparHTML(m.destinatario)} — ${escaparHTML(m.poblacion)}${m.tiers ? " (" + escaparHTML(m.tiers) + ")" : ""}</option>`
+      )
+    ].join("");
 
     html += `
       <tr class="${completo ? "complete" : "review"}">
@@ -900,6 +1186,10 @@ function renderizarResultados() {
         <td><input data-index="${index}" data-field="palets" value="${escaparHTML(r.palets)}"></td>
         <td><input data-index="${index}" data-field="numeroSalida" value="${escaparHTML(r.numeroSalida)}"></td>
         <td><input data-index="${index}" data-field="fechaEntrega" value="${escaparHTML(r.fechaEntrega)}" placeholder="No indicada"></td>
+        <td><select data-match-index="${index}">${opcionesMaestro}</select></td>
+        <td>${escaparHTML(r.poblacionMaestro || "—")}</td>
+        <td><strong>${escaparHTML(r.tiers || "—")}</strong></td>
+        <td><span class="match-pill ${claseEstado}">${escaparHTML(estado)}</span></td>
         <td class="page-cell">${r.pagina}</td>
         <td>${completo ? "Completo" : "Revisar"}</td>
       </tr>
@@ -907,29 +1197,42 @@ function renderizarResultados() {
   });
 
   html += `</tbody></table></div>`;
-
   resultsContainer.innerHTML = html;
 
   resultsContainer.querySelectorAll("input[data-index]").forEach(input => {
     input.addEventListener("input", event => {
       const index = Number(event.target.dataset.index);
       const field = event.target.dataset.field;
-
       resultados[index][field] = event.target.value;
 
       const fila = event.target.closest("tr");
       const completo = estaCompleto(resultados[index]);
-
-      fila.className = completo ? "complete" : "review";
-      fila.lastElementChild.textContent =
-        completo ? "Completo" : "Revisar";
-
+      fila.classList.toggle("complete", completo);
+      fila.classList.toggle("review", !completo);
+      fila.lastElementChild.textContent = completo ? "Completo" : "Revisar";
       actualizarResumen();
     });
   });
 
-  actualizarResumen();
+  resultsContainer.querySelectorAll("select[data-match-index]").forEach(select => {
+    select.addEventListener("change", event => {
+      const index = Number(event.target.dataset.matchIndex);
+      const valor = event.target.value;
 
+      if (valor === "") {
+        aplicarCoincidencia(resultados[index], null);
+      } else {
+        aplicarCoincidencia(
+          resultados[index],
+          { indice:Number(valor), candidato:maestroDestinatarios[Number(valor)], similitudNombre:1 },
+          true
+        );
+      }
+      renderizarResultados();
+    });
+  });
+
+  actualizarResumen();
   document.getElementById("legend").style.display = "flex";
   document.getElementById("summary").style.display = "flex";
 }
@@ -947,6 +1250,18 @@ function actualizarResumen() {
 
   document.getElementById("reviewCount").textContent =
     revisar;
+
+  document.getElementById("exactCount").textContent =
+    resultados.filter(r => r.estadoVinculacion === "EXACTA").length;
+
+  document.getElementById("fuzzyCount").textContent =
+    resultados.filter(r => r.estadoVinculacion === "APROXIMADA").length;
+
+  document.getElementById("noMatchCount").textContent =
+    resultados.filter(r => r.estadoVinculacion === "SIN COINCIDENCIA").length;
+
+  document.getElementById("manualCount").textContent =
+    resultados.filter(r => r.estadoVinculacion === "MANUAL").length;
 }
 
 /* EXPORTAR EXCEL */
@@ -962,7 +1277,12 @@ function exportarExcel() {
     "Kilos brutos":r.kilosBrutos,
     "Total palets":r.palets,
     "Nº albarán":r.numeroSalida,
-    "Fecha de entrega":r.fechaEntrega
+    "Fecha de entrega":r.fechaEntrega,
+    "Destinatario maestro":r.destinatarioMaestro,
+    "Población maestro":r.poblacionMaestro,
+    "TIERS":r.tiers,
+    "Estado vinculación":r.estadoVinculacion,
+    "Similitud destinatario":r.similitud ? Math.round(r.similitud * 100) + "%" : ""
   }));
 
   const worksheet = XLSX.utils.json_to_sheet(filas);
@@ -976,7 +1296,12 @@ function exportarExcel() {
     { wch:18 },
     { wch:15 },
     { wch:22 },
-    { wch:18 }
+    { wch:18 },
+    { wch:35 },
+    { wch:25 },
+    { wch:16 },
+    { wch:22 },
+    { wch:20 }
   ];
 
   const workbook = XLSX.utils.book_new();
@@ -1000,12 +1325,17 @@ function limpiar() {
   if (procesando) return;
 
   selectedFile = null;
+  selectedMasterFile = null;
+  maestroDestinatarios = [];
   resultados = [];
 
   pdfInput.value = "";
+  masterInput.value = "";
   fileName.textContent = "Ningún PDF seleccionado";
+  masterFileName.textContent = "Ningún maestro seleccionado";
 
   processBtn.disabled = true;
+  selectMasterBtn.disabled = false;
   exportBtn.disabled = true;
 
   resultsContainer.innerHTML = "";
