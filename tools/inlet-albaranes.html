@@ -11,20 +11,20 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
-:root{
+:root {
   --blue:#0078c8;
   --dark:#005a9e;
   --bg:#f2f5f8;
   --border:#d9e1ea;
 }
-*{box-sizing:border-box}
-body{
+* {box-sizing:border-box}
+body {
   margin:0;
   font-family:"Segoe UI",Arial,sans-serif;
   background:var(--bg);
   color:#2b2b2b;
 }
-.topbar{
+.topbar {
   background:var(--blue);
   color:white;
   padding:14px 30px;
@@ -33,9 +33,8 @@ body{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  box-shadow:0 2px 6px #0002;
 }
-.backBtn{
+.backBtn {
   background:white;
   color:var(--blue);
   border:0;
@@ -44,7 +43,7 @@ body{
   font-weight:600;
   cursor:pointer;
 }
-.container{
+.container {
   max-width:1450px;
   margin:30px auto;
   padding:25px;
@@ -52,24 +51,23 @@ body{
   border-radius:8px;
   box-shadow:0 5px 20px #00000012;
 }
-h1{
+h1 {
   color:var(--dark);
   border-bottom:2px solid var(--blue);
   padding-bottom:10px;
-  margin-top:0;
 }
-.description{
+.description {
   color:#555;
   line-height:1.5;
 }
-.controls{
+.controls {
   display:flex;
   flex-wrap:wrap;
   align-items:center;
   gap:12px;
   margin:22px 0;
 }
-.btn{
+.btn {
   background:var(--blue);
   color:white;
   border:0;
@@ -78,20 +76,17 @@ h1{
   font-weight:600;
   cursor:pointer;
 }
-.btn:hover{background:var(--dark)}
-.btn:disabled{
-  opacity:.5;
-  cursor:not-allowed;
-}
-.btn.secondary{background:#596979}
-.btn.export{background:#16834a}
-input[type=file]{display:none}
-.file-name{
+.btn:hover {background:var(--dark)}
+.btn:disabled {opacity:.5;cursor:not-allowed}
+.btn.secondary {background:#596979}
+.btn.export {background:#16834a}
+input[type=file] {display:none}
+.file-name {
   color:#555;
   font-size:13px;
   overflow-wrap:anywhere;
 }
-.status-box{
+.status-box {
   display:none;
   background:#eef5fb;
   border:1px solid #c9dfef;
@@ -99,70 +94,70 @@ input[type=file]{display:none}
   border-radius:6px;
   margin:15px 0;
 }
-.progress-track{
+.progress-track {
   height:12px;
   background:#dce5ed;
   border-radius:10px;
   overflow:hidden;
   margin-top:10px;
 }
-.progress-bar{
+.progress-bar {
   height:100%;
   width:0%;
   background:var(--blue);
   transition:width .2s;
 }
-#progressText{
+#progressText {
   font-size:13px;
   color:#455;
   margin-top:7px;
 }
-.summary{
+.summary {
   display:flex;
   gap:12px;
   flex-wrap:wrap;
   margin:20px 0;
 }
-.summary-card{
+.summary-card {
   background:#f4f7fa;
   border:1px solid var(--border);
   border-radius:6px;
   padding:12px 18px;
   min-width:150px;
 }
-.summary-card strong{
+.summary-card strong {
   display:block;
   font-size:22px;
   color:var(--dark);
 }
-.summary-card span{
+.summary-card span {
   color:#667;
   font-size:12px;
 }
-.table-wrap{
+.table-wrap {
   overflow-x:auto;
   margin-top:20px;
 }
-table{
+table {
   width:100%;
   border-collapse:collapse;
   font-size:13px;
   min-width:2050px;
 }
-th{
+th {
   background:var(--blue);
   color:white;
   padding:11px 8px;
   text-align:left;
   white-space:nowrap;
 }
-td{
+td {
   padding:7px;
   border-bottom:1px solid var(--border);
 }
-tr.review{background:#fff3cd}
-tr.complete{background:#e6f4ea}
-td input{
+tr.review {background:#fff3cd}
+tr.complete {background:#e6f4ea}
+td input {
   width:100%;
   min-width:90px;
   border:1px solid #ccd5de;
@@ -171,31 +166,11 @@ td input{
   font:inherit;
   background:white;
 }
-td input:focus{
+td input:focus {
   outline:2px solid #83bde5;
-  border-color:var(--blue);
 }
-td input.wide{min-width:180px}
-.page-cell{
-  white-space:nowrap;
-  color:#667;
-}
-.legend{
-  display:flex;
-  gap:15px;
-  flex-wrap:wrap;
-  margin-top:15px;
-  font-size:12px;
-}
-.legend span{
-  padding:6px 10px;
-  border-radius:4px;
-}
-.legend .green{background:#e6f4ea}
-.legend .yellow{background:#fff3cd}
-.legend .orange{background:#ffe8cc}
-.legend .red{background:#f8d7da}
-td select{
+td input.wide {min-width:180px}
+td select {
   width:100%;
   min-width:220px;
   border:1px solid #ccd5de;
@@ -204,7 +179,11 @@ td select{
   font:inherit;
   background:white;
 }
-.match-pill{
+.page-cell {
+  white-space:nowrap;
+  color:#667;
+}
+.match-pill {
   display:inline-block;
   padding:5px 8px;
   border-radius:4px;
@@ -212,29 +191,44 @@ td select{
   font-weight:600;
   white-space:nowrap;
 }
-.match-pill.exact{background:#d1e7dd;color:#0f5132}
-.match-pill.fuzzy{background:#ffe5c2;color:#854d0e}
-.match-pill.none{background:#f8d7da;color:#842029}
-.match-pill.manual{background:#dbeafe;color:#1e40af}
-.message{
+.match-pill.exact {background:#d1e7dd;color:#0f5132}
+.match-pill.fuzzy {background:#ffe5c2;color:#854d0e}
+.match-pill.none {background:#f8d7da;color:#842029}
+.match-pill.manual {background:#dbeafe;color:#1e40af}
+.legend {
+  display:flex;
+  gap:15px;
+  flex-wrap:wrap;
+  margin-top:15px;
+  font-size:12px;
+}
+.legend span {
+  padding:6px 10px;
+  border-radius:4px;
+}
+.legend .green {background:#e6f4ea}
+.legend .yellow {background:#fff3cd}
+.legend .orange {background:#ffe8cc}
+.legend .red {background:#f8d7da}
+.message {
   padding:12px;
   border-radius:5px;
   margin-top:15px;
   display:none;
 }
-.message.error{
+.message.error {
   display:block;
   background:#f8d7da;
   color:#842029;
 }
-.message.info{
+.message.info {
   display:block;
   background:#e8f2fb;
   color:#17496f;
 }
-@media(max-width:700px){
-  .container{margin:12px;padding:15px}
-  .topbar{padding:12px 15px}
+@media(max-width:700px) {
+  .container {margin:12px;padding:15px}
+  .topbar {padding:12px 15px}
 }
 </style>
 </head>
@@ -243,83 +237,100 @@ td select{
 
 <div class="topbar">
   <span>Sistema Operativo Interno</span>
-  <button class="backBtn" onclick="window.location.href='../menu.html'">Volver</button>
+  <button class="backBtn" onclick="window.location.href='../menu.html'">
+    Volver
+  </button>
 </div>
 
 <div class="container">
 
-  <h1>INLET ALBARANES</h1>
+<h1>INLET ALBARANES</h1>
 
-  <p class="description">
-    Sube el PDF de albaranes y el maestro Excel de destinatarios.
-    El sistema extraerá los datos del PDF y los vinculará con el
-    maestro para recuperar el código TIERS antes de generar el Excel.
-  </p>
+<p class="description">
+  Sube el PDF de albaranes y el maestro Excel de destinatarios.
+  El sistema extraerá los datos y los vinculará con el maestro
+  para recuperar el código TIERS antes de generar el Excel.
+</p>
 
-  <div class="controls">
-    <button class="btn" id="selectPdfBtn">1. Subir PDF de albaranes</button>
-    <input type="file" id="pdfInput" accept=".pdf,application/pdf">
-    <span class="file-name" id="fileName">Ningún PDF seleccionado</span>
+<div class="controls">
+  <button class="btn" id="selectPdfBtn">
+    1. Subir PDF de albaranes
+  </button>
+  <input type="file" id="pdfInput" accept=".pdf,application/pdf">
+  <span class="file-name" id="fileName">
+    Ningún PDF seleccionado
+  </span>
 
-    <button class="btn" id="selectMasterBtn">2. Subir maestro destinatarios</button>
-    <input type="file" id="masterInput" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
-    <span class="file-name" id="masterFileName">Ningún maestro seleccionado</span>
+  <button class="btn" id="selectMasterBtn">
+    2. Subir maestro destinatarios
+  </button>
+  <input type="file" id="masterInput" accept=".xlsx,.xls">
+  <span class="file-name" id="masterFileName">
+    Ningún maestro seleccionado
+  </span>
 
-    <button class="btn" id="processBtn" disabled>3. Procesar y vincular</button>
-    <button class="btn export" id="exportBtn" disabled>Exportar Excel</button>
-    <button class="btn secondary" id="resetBtn">Limpiar</button>
+  <button class="btn" id="processBtn" disabled>
+    3. Procesar y vincular
+  </button>
+  <button class="btn export" id="exportBtn" disabled>
+    Exportar Excel
+  </button>
+  <button class="btn secondary" id="resetBtn">
+    Limpiar
+  </button>
+</div>
+
+<div class="status-box" id="statusBox">
+  <strong id="statusTitle">Preparando OCR...</strong>
+  <div class="progress-track">
+    <div class="progress-bar" id="progressBar"></div>
   </div>
+  <div id="progressText">Esperando...</div>
+</div>
 
-  <div class="status-box" id="statusBox">
-    <strong id="statusTitle">Preparando OCR...</strong>
-    <div class="progress-track">
-      <div class="progress-bar" id="progressBar"></div>
-    </div>
-    <div id="progressText">Esperando...</div>
+<div id="message" class="message"></div>
+
+<div class="summary" id="summary" style="display:none">
+  <div class="summary-card">
+    <strong id="totalAlbaranes">0</strong>
+    <span>Albaranes detectados</span>
   </div>
-
-  <div id="message" class="message"></div>
-
-  <div class="summary" id="summary" style="display:none">
-    <div class="summary-card">
-      <strong id="totalAlbaranes">0</strong>
-      <span>Albaranes detectados</span>
-    </div>
-    <div class="summary-card">
-      <strong id="completeCount">0</strong>
-      <span>Completos</span>
-    </div>
-    <div class="summary-card">
-      <strong id="reviewCount">0</strong>
-      <span>Para revisar datos extraídos</span>
-    </div>
-    <div class="summary-card">
-      <strong id="exactCount">0</strong>
-      <span>Vinculaciones exactas</span>
-    </div>
-    <div class="summary-card">
-      <strong id="fuzzyCount">0</strong>
-      <span>Vinculaciones aproximadas</span>
-    </div>
-    <div class="summary-card">
-      <strong id="noMatchCount">0</strong>
-      <span>Sin vinculación</span>
-    </div>
-    <div class="summary-card">
-      <strong id="manualCount">0</strong>
-      <span>Correcciones manuales</span>
-    </div>
+  <div class="summary-card">
+    <strong id="completeCount">0</strong>
+    <span>Completos</span>
   </div>
-
-  <div id="resultsContainer"></div>
-
-  <div class="legend" id="legend" style="display:none">
-    <span class="green">Datos completos</span>
-    <span class="yellow">Falta algún dato extraído</span>
-    <span class="green">Coincidencia exacta</span>
-    <span class="orange">Coincidencia aproximada (revisar)</span>
-    <span class="red">Sin coincidencia</span>
+  <div class="summary-card">
+    <strong id="reviewCount">0</strong>
+    <span>Para revisar</span>
   </div>
+  <div class="summary-card">
+    <strong id="exactCount">0</strong>
+    <span>Vinculaciones exactas</span>
+  </div>
+  <div class="summary-card">
+    <strong id="fuzzyCount">0</strong>
+    <span>Vinculaciones aproximadas</span>
+  </div>
+  <div class="summary-card">
+    <strong id="noMatchCount">0</strong>
+    <span>Sin vinculación</span>
+  </div>
+  <div class="summary-card">
+    <strong id="manualCount">0</strong>
+    <span>Correcciones manuales</span>
+  </div>
+</div>
+
+<div id="resultsContainer"></div>
+
+<div class="legend" id="legend" style="display:none">
+  <span class="green">Datos completos</span>
+  <span class="yellow">Revisar extracción</span>
+  <span class="green">Coincidencia exacta</span>
+  <span class="orange">Coincidencia aproximada</span>
+  <span class="red">Sin coincidencia</span>
+</div>
+
 </div>
 
 <script>
@@ -327,14 +338,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
 
 const pdfInput = document.getElementById("pdfInput");
-const selectPdfBtn = document.getElementById("selectPdfBtn");
 const masterInput = document.getElementById("masterInput");
-const selectMasterBtn = document.getElementById("selectMasterBtn");
 const processBtn = document.getElementById("processBtn");
 const exportBtn = document.getElementById("exportBtn");
-const resetBtn = document.getElementById("resetBtn");
-const fileName = document.getElementById("fileName");
-const masterFileName = document.getElementById("masterFileName");
 const statusBox = document.getElementById("statusBox");
 const statusTitle = document.getElementById("statusTitle");
 const progressText = document.getElementById("progressText");
@@ -349,70 +355,78 @@ let resultados = [];
 let ocrWorker = null;
 let procesando = false;
 
-selectPdfBtn.addEventListener("click", () => pdfInput.click());
-selectMasterBtn.addEventListener("click", () => masterInput.click());
+/* ============================
+   BOTONES Y ARCHIVOS
+============================ */
 
-pdfInput.addEventListener("change", () => {
+document.getElementById("selectPdfBtn").onclick =
+  () => pdfInput.click();
+
+document.getElementById("selectMasterBtn").onclick =
+  () => masterInput.click();
+
+document.getElementById("resetBtn").onclick = limpiar;
+processBtn.onclick = procesarPDF;
+exportBtn.onclick = exportarExcel;
+
+pdfInput.onchange = () => {
   selectedFile = pdfInput.files[0] || null;
   reiniciarResultados();
 
-  fileName.textContent = selectedFile
-    ? selectedFile.name
-    : "Ningún PDF seleccionado";
+  document.getElementById("fileName").textContent =
+    selectedFile ? selectedFile.name : "Ningún PDF seleccionado";
 
   actualizarBotonProcesar();
-  hideMessage();
-});
+  ocultarMensaje();
+};
 
-masterInput.addEventListener("change", async () => {
+masterInput.onchange = async () => {
   selectedMasterFile = masterInput.files[0] || null;
   maestroDestinatarios = [];
   reiniciarResultados();
   actualizarBotonProcesar();
 
+  const boton = document.getElementById("selectMasterBtn");
+
   if (!selectedMasterFile) {
-    masterFileName.textContent = "Ningún maestro seleccionado";
+    document.getElementById("masterFileName").textContent =
+      "Ningún maestro seleccionado";
     return;
   }
 
-  masterFileName.textContent = selectedMasterFile.name;
-  selectMasterBtn.disabled = true;
-  mostrarMensaje("Leyendo el maestro de destinatarios...", "info");
+  document.getElementById("masterFileName").textContent =
+    selectedMasterFile.name;
+
+  boton.disabled = true;
 
   try {
-    maestroDestinatarios = await leerMaestroDestinatarios(selectedMasterFile);
+    mostrarMensaje("Leyendo maestro...", "info");
+    maestroDestinatarios =
+      await leerMaestroDestinatarios(selectedMasterFile);
+
     mostrarMensaje(
-      `Maestro cargado correctamente: ${maestroDestinatarios.length} destinatarios disponibles.`,
+      `Maestro cargado: ${maestroDestinatarios.length} destinatarios.`,
       "info"
     );
   } catch (error) {
     selectedMasterFile = null;
     masterInput.value = "";
-    masterFileName.textContent = "Ningún maestro seleccionado";
     maestroDestinatarios = [];
-    mostrarMensaje("No se ha podido cargar el maestro: " + error.message, "error");
+    mostrarMensaje(error.message, "error");
   } finally {
-    selectMasterBtn.disabled = false;
+    boton.disabled = false;
     actualizarBotonProcesar();
   }
-});
-
-processBtn.addEventListener("click", procesarPDF);
-exportBtn.addEventListener("click", exportarExcel);
-resetBtn.addEventListener("click", limpiar);
+};
 
 function mostrarMensaje(texto, tipo="info") {
   message.className = "message " + tipo;
   message.textContent = texto;
 }
 
-function hideMessage() {
+function ocultarMensaje() {
   message.className = "message";
   message.textContent = "";
-}
-
-function actualizarBotonProcesar() {
-  processBtn.disabled = !(selectedFile && maestroDestinatarios.length && !procesando);
 }
 
 function reiniciarResultados() {
@@ -424,68 +438,12 @@ function reiniciarResultados() {
   document.getElementById("legend").style.display = "none";
 }
 
-async function leerMaestroDestinatarios(archivo) {
-  const datos = new Uint8Array(await archivo.arrayBuffer());
-  const libro = XLSX.read(datos, { type:"array" });
-
-  const nombreHoja = libro.SheetNames.find(nombre =>
-    normalizar(nombre) === normalizar("TIERS DESTINO")
+function actualizarBotonProcesar() {
+  processBtn.disabled = !(
+    selectedFile &&
+    maestroDestinatarios.length &&
+    !procesando
   );
-
-  if (!nombreHoja) {
-    throw new Error('No se encuentra la hoja "TIERS DESTINO".');
-  }
-
-  const hoja = libro.Sheets[nombreHoja];
-  const filas = XLSX.utils.sheet_to_json(hoja, {
-    header:1,
-    defval:"",
-    raw:false
-  });
-
-  let filaCabecera = -1;
-  let colDestinatario = -1;
-  let colPoblacion = -1;
-  let colTiers = -1;
-
-  for (let i = 0; i < Math.min(filas.length, 10); i++) {
-    const cabeceras = filas[i].map(valor => normalizar(valor));
-    const d = cabeceras.indexOf("destinatario");
-    const p = cabeceras.findIndex(valor =>
-      valor === "poblacion" || valor === "población"
-    );
-    const t = cabeceras.indexOf("tiers");
-
-    if (d >= 0 && p >= 0 && t >= 0) {
-      filaCabecera = i;
-      colDestinatario = d;
-      colPoblacion = p;
-      colTiers = t;
-      break;
-    }
-  }
-
-  if (filaCabecera < 0) {
-    throw new Error(
-      'La hoja debe contener las columnas DESTINATARIO, POBLACIÓN y TIERS.'
-    );
-  }
-
-  const maestro = filas.slice(filaCabecera + 1)
-    .map(fila => ({
-      destinatario: String(fila[colDestinatario] ?? "").trim(),
-      poblacion: String(fila[colPoblacion] ?? "").trim(),
-      tiers: String(fila[colTiers] ?? "").trim()
-    }))
-    .filter(registro => registro.destinatario && registro.poblacion);
-
-  if (!maestro.length) {
-    throw new Error(
-      "No se han encontrado destinatarios con población en el maestro."
-    );
-  }
-
-  return maestro;
 }
 
 function actualizarProgreso(porcentaje, texto) {
@@ -494,6 +452,10 @@ function actualizarProgreso(porcentaje, texto) {
     Math.max(0, Math.min(100, porcentaje)) + "%";
   progressText.textContent = texto;
 }
+
+/* ============================
+   NORMALIZACIÓN Y COINCIDENCIAS
+============================ */
 
 function normalizar(texto) {
   return String(texto || "")
@@ -504,117 +466,149 @@ function normalizar(texto) {
     .trim();
 }
 
-function distanciaLevenshtein(a, b) {
+function distanciaLevenshtein(a,b) {
   const matriz = Array.from(
-    { length:b.length + 1 },
-    () => []
+    {length:b.length+1}, () => []
   );
 
-  for (let i = 0; i <= b.length; i++) matriz[i][0] = i;
-  for (let j = 0; j <= a.length; j++) matriz[0][j] = j;
+  for(let i=0;i<=b.length;i++) matriz[i][0]=i;
+  for(let j=0;j<=a.length;j++) matriz[0][j]=j;
 
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      matriz[i][j] = b[i - 1] === a[j - 1]
-        ? matriz[i - 1][j - 1]
+  for(let i=1;i<=b.length;i++) {
+    for(let j=1;j<=a.length;j++) {
+      matriz[i][j] = a[j-1] === b[i-1]
+        ? matriz[i-1][j-1]
         : Math.min(
-            matriz[i - 1][j - 1] + 1,
-            matriz[i][j - 1] + 1,
-            matriz[i - 1][j] + 1
+            matriz[i-1][j-1]+1,
+            matriz[i][j-1]+1,
+            matriz[i-1][j]+1
           );
     }
   }
-
   return matriz[b.length][a.length];
 }
 
-function calcularSimilitud(a, b) {
-  if (a === b) return 1;
-  if (!a || !b) return 0;
-
-  return 1 - distanciaLevenshtein(a, b) /
-    Math.max(a.length, b.length);
+function calcularSimilitud(a,b) {
+  if(a===b) return 1;
+  if(!a || !b) return 0;
+  return 1 - distanciaLevenshtein(a,b) /
+    Math.max(a.length,b.length);
 }
 
 function normalizarSegmentoLocalidad(texto) {
   return normalizar(texto)
-    .replace(/\b\d{5}\b/g, " ")
-    .replace(/\b(españa|espana)\b/g, " ")
-    .replace(/[(),.;]/g, " ")
-    .replace(/\s+/g, " ")
+    .replace(/\b\d{5}\b/g," ")
+    .replace(/\b(españa|espana)\b/g," ")
+    .replace(/[(),.;]/g," ")
+    .replace(/\s+/g," ")
     .trim();
 }
 
-function puntuarPoblacion(localidadAlbaran, poblacionMaestro) {
+function puntuarPoblacion(localidad,poblacionMaestro) {
   const poblacion = normalizarSegmentoLocalidad(poblacionMaestro);
-  if (!poblacion) return 0;
+  const completa = normalizarSegmentoLocalidad(localidad);
 
-  const localidadCompleta =
-    normalizarSegmentoLocalidad(localidadAlbaran);
-
-  if (!localidadCompleta) return 0;
+  if(!poblacion || !completa) return 0;
 
   const expresion = new RegExp(
     "(^| )" +
-    poblacion.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") +
+    poblacion.replace(/[.*+?^${}()|[\]\\]/g,"\\$&") +
     "( |$)"
   );
 
-  if (expresion.test(localidadCompleta)) return 1;
+  if(expresion.test(completa)) return 1;
 
-  const segmentos = String(localidadAlbaran || "")
+  const segmentos = String(localidad)
     .split(/[,;|]/)
     .map(normalizarSegmentoLocalidad)
     .filter(Boolean);
 
-  let mejor = calcularSimilitud(localidadCompleta, poblacion);
+  let mejor = calcularSimilitud(completa,poblacion);
 
-  for (const segmento of segmentos) {
+  for(const segmento of segmentos) {
     mejor = Math.max(
       mejor,
-      calcularSimilitud(segmento, poblacion)
+      calcularSimilitud(segmento,poblacion)
     );
   }
-
   return mejor;
 }
 
+async function leerMaestroDestinatarios(archivo) {
+  const datos = new Uint8Array(await archivo.arrayBuffer());
+  const libro = XLSX.read(datos,{type:"array"});
+
+  const nombreHoja = libro.SheetNames.find(
+    n => normalizar(n) === normalizar("TIERS DESTINO")
+  );
+
+  if(!nombreHoja) {
+    throw new Error('Falta la hoja "TIERS DESTINO".');
+  }
+
+  const filas = XLSX.utils.sheet_to_json(
+    libro.Sheets[nombreHoja],
+    {header:1,defval:"",raw:false}
+  );
+
+  let cabecera=-1,d=-1,p=-1,t=-1;
+
+  for(let i=0;i<Math.min(filas.length,10);i++) {
+    const c=filas[i].map(normalizar);
+    const di=c.indexOf("destinatario");
+    const po=c.indexOf("poblacion");
+    const ti=c.indexOf("tiers");
+
+    if(di>=0 && po>=0 && ti>=0) {
+      cabecera=i;d=di;p=po;t=ti;
+      break;
+    }
+  }
+
+  if(cabecera<0) {
+    throw new Error(
+      "El maestro necesita DESTINATARIO, POBLACIÓN y TIERS."
+    );
+  }
+
+  const maestro=filas.slice(cabecera+1).map(f=>({
+    destinatario:String(f[d]??"").trim(),
+    poblacion:String(f[p]??"").trim(),
+    tiers:String(f[t]??"").trim()
+  })).filter(r=>r.destinatario && r.poblacion);
+
+  if(!maestro.length) {
+    throw new Error("El maestro no contiene destinatarios válidos.");
+  }
+
+  return maestro;
+}
+
 function buscarCoincidenciaDestinatario(registro) {
-  const nombreAlbaran = normalizar(registro.destinatario);
-  const localidadAlbaran = registro.localidad || "";
+  const nombre=normalizar(registro.destinatario);
+  const localidad=registro.localidad;
 
-  if (!nombreAlbaran || !localidadAlbaran) return null;
+  if(!nombre || !localidad) return null;
 
-  let mejor = null;
+  let mejor=null;
 
-  maestroDestinatarios.forEach((candidato, indice) => {
-    const similitudNombre = calcularSimilitud(
-      nombreAlbaran,
-      normalizar(candidato.destinatario)
+  maestroDestinatarios.forEach((m,indice)=>{
+    const sn=calcularSimilitud(
+      nombre,normalizar(m.destinatario)
     );
+    const sp=puntuarPoblacion(localidad,m.poblacion);
 
-    const similitudPoblacion = puntuarPoblacion(
-      localidadAlbaran,
-      candidato.poblacion
-    );
+    if(sn<0.80 || sp<0.80) return;
 
-    if (similitudNombre < 0.80 ||
-        similitudPoblacion < 0.80) return;
+    const puntuacion=sn*.7+sp*.3;
 
-    const puntuacion =
-      (similitudNombre * 0.7) +
-      (similitudPoblacion * 0.3);
-
-    if (!mejor || puntuacion > mejor.puntuacion) {
-      mejor = {
+    if(!mejor || puntuacion>mejor.puntuacion) {
+      mejor={
         indice,
-        candidato,
-        similitudNombre,
-        similitudPoblacion,
+        candidato:m,
         puntuacion,
-        exacta:
-          similitudNombre === 1 &&
-          similitudPoblacion === 1
+        similitudNombre:sn,
+        exacta:sn===1 && sp===1
       };
     }
   });
@@ -622,773 +616,727 @@ function buscarCoincidenciaDestinatario(registro) {
   return mejor;
 }
 
-function aplicarCoincidencia(registro, coincidencia, manual=false) {
-  if (!coincidencia) {
-    registro.indiceMaestro = "";
-    registro.destinatarioMaestro = "";
-    registro.poblacionMaestro = "";
-    registro.tiers = "";
-    registro.estadoVinculacion = "SIN COINCIDENCIA";
-    registro.similitud = 0;
+function aplicarCoincidencia(registro,c,manual=false) {
+  if(!c) {
+    registro.indiceMaestro="";
+    registro.destinatarioMaestro="";
+    registro.poblacionMaestro="";
+    registro.tiers="";
+    registro.similitud=0;
+    registro.estadoVinculacion="SIN COINCIDENCIA";
     return;
   }
 
-  const maestro =
-    coincidencia.candidato ||
-    maestroDestinatarios[coincidencia.indice];
+  const m=c.candidato ||
+    maestroDestinatarios[c.indice];
 
-  registro.indiceMaestro = String(coincidencia.indice);
-  registro.destinatarioMaestro = maestro.destinatario;
-  registro.poblacionMaestro = maestro.poblacion;
-  registro.tiers = maestro.tiers;
-  registro.similitud = manual
-    ? null
-    : (coincidencia.similitudNombre ?? 1);
-
-  registro.estadoVinculacion = manual
+  registro.indiceMaestro=String(c.indice);
+  registro.destinatarioMaestro=m.destinatario;
+  registro.poblacionMaestro=m.poblacion;
+  registro.tiers=m.tiers;
+  registro.similitud=manual ? null : c.similitudNombre;
+  registro.estadoVinculacion=manual
     ? "MANUAL"
-    : (coincidencia.exacta ? "EXACTA" : "APROXIMADA");
+    : c.exacta ? "EXACTA" : "APROXIMADA";
 }
 
 function vincularDestinatarios() {
-  resultados.forEach(registro => {
-    const coincidencia =
-      buscarCoincidenciaDestinatario(registro);
-
-    aplicarCoincidencia(registro, coincidencia);
+  resultados.forEach(r=>{
+    aplicarCoincidencia(
+      r,
+      buscarCoincidenciaDestinatario(r)
+    );
   });
 }
 
+/* ============================
+   FUNCIONES OCR
+============================ */
+
 function limpiarTextoOCR(texto) {
-  return String(texto || "")
-    .replace(/\r/g, "\n")
-    .replace(/[ \t]+/g, " ")
-    .replace(/\n{2,}/g, "\n")
+  return String(texto||"")
+    .replace(/\r/g,"\n")
+    .replace(/[ \t]+/g," ")
+    .replace(/\n{2,}/g,"\n")
     .trim();
 }
 
-function escaparHTML(valor) {
-  return String(valor ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
+function crearRecorte(canvas,x,y,w,h) {
+  const c=document.createElement("canvas");
+  c.width=Math.max(1,Math.floor(canvas.width*w));
+  c.height=Math.max(1,Math.floor(canvas.height*h));
 
-function crearRecorte(canvas, x, y, ancho, alto) {
-  const recorte = document.createElement("canvas");
-
-  recorte.width =
-    Math.max(1, Math.floor(canvas.width * ancho));
-
-  recorte.height =
-    Math.max(1, Math.floor(canvas.height * alto));
-
-  const ctx = recorte.getContext("2d");
-
-  ctx.drawImage(
+  c.getContext("2d").drawImage(
     canvas,
-    Math.floor(canvas.width * x),
-    Math.floor(canvas.height * y),
-    recorte.width,
-    recorte.height,
-    0,
-    0,
-    recorte.width,
-    recorte.height
+    Math.floor(canvas.width*x),
+    Math.floor(canvas.height*y),
+    c.width,c.height,
+    0,0,c.width,c.height
   );
-
-  return recorte;
+  return c;
 }
 
-async function reconocer(recorte, modo="6") {
+async function reconocer(canvas,modo="6") {
   await ocrWorker.setParameters({
-    tessedit_pageseg_mode: modo
+    tessedit_pageseg_mode:modo,
+    tessedit_char_whitelist:""
   });
-
-  const resultado = await ocrWorker.recognize(recorte);
-
-  return limpiarTextoOCR(resultado.data.text || "");
+  const resultado=await ocrWorker.recognize(canvas);
+  return limpiarTextoOCR(resultado.data.text||"");
 }
 
 function extraerNumeroSalida(texto) {
-  const limpio = String(texto || "")
+  const limpio=String(texto||"")
     .toUpperCase()
-    .replace(/\s+/g, " ")
-    .replace(/S A L/g, "SAL");
+    .replace(/\s+/g," ")
+    .replace(/S A L/g,"SAL");
 
-  const match = limpio.match(
-    /SAL\s*[-:]?\s*(\d{6,})/
-  );
+  const m=limpio.match(/SAL\s*[-:]?\s*(\d{6,})/);
+  return m ? "SAL"+m[1] : "";
+}
 
-  return match ? "SAL" + match[1] : "";
+function limpiarNombre(texto) {
+  return String(texto||"")
+    .replace(/^[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+/,"")
+    .replace(/\s+/g," ")
+    .trim();
 }
 
 function extraerDatosDestinatario(texto) {
-  const lineas = limpiarTextoOCR(texto)
-    .split("\n")
-    .map(l => l.trim())
-    .filter(Boolean);
+  const lineas=limpiarTextoOCR(texto)
+    .split("\n").map(x=>x.trim()).filter(Boolean);
 
-  let indice = lineas.findIndex(l =>
-    /destinatario/i.test(l)
-  );
+  const indice=lineas.findIndex(x=>/destinatario/i.test(x));
 
-  if (indice < 0) {
-    return {
-      destinatario:"",
-      direccion:"",
-      codigoPostal:"",
-      localidad:""
-    };
-  }
+  const vacio={
+    destinatario:"",
+    direccion:"",
+    codigoPostal:"",
+    localidad:""
+  };
 
-  const contenido = [];
+  if(indice<0) return vacio;
 
-  for (let i = indice + 1; i < lineas.length; i++) {
-    const linea = lineas[i];
+  const contenido=[];
 
-    if (/^(tel|telf|telefono|nif|cif|fax)\b/i.test(linea)) {
+  for(let i=indice+1;i<lineas.length;i++) {
+    const l=lineas[i];
+
+    if(/^(tel|telf|telefono|nif|cif|fax)\b/i.test(l))
       break;
-    }
-
-    if (/propietario/i.test(linea)) break;
-
-    if (linea.length > 1) contenido.push(linea);
+    if(/propietario/i.test(l)) break;
+    if(l.length>1) contenido.push(l);
   }
 
-  if (!contenido.length) {
-    return {
-      destinatario:"",
-      direccion:"",
-      codigoPostal:"",
-      localidad:""
-    };
-  }
+  if(!contenido.length) return vacio;
 
-  const destinatario = limpiarNombre(contenido[0]);
+  let direccion=[];
+  let codigoPostal="";
+  let localidad="";
 
-  let direccionPartes = [];
-  let codigoPostal = "";
-  let localidad = "";
+  for(let i=1;i<contenido.length;i++) {
+    const l=contenido[i];
 
-  for (let i = 1; i < contenido.length; i++) {
-    const linea = contenido[i];
+    // Códigos postales españoles y portugueses
+    const cp=l.match(/\b(\d{5}|\d{4}(?:[- ]\d{3})?)\b/);
 
-    // España: 5 dígitos.
-    // Portugal: 4 dígitos o formato 4-3.
-    const cpMatch = linea.match(
-      /\b(\d{5}|\d{4}(?:[- ]\d{3})?)\b/
-    );
-
-    if (cpMatch) {
-      codigoPostal = cpMatch[1];
-
-      localidad = linea
-        .replace(cpMatch[0], "")
-        .replace(/[,;]\s*$/, "")
+    if(cp) {
+      codigoPostal=cp[1];
+      localidad=l.replace(cp[0],"")
+        .replace(/[,;]\s*$/,"")
         .trim();
 
-      const siguiente = contenido[i + 1] || "";
+      const siguiente=contenido[i+1]||"";
 
-      if (
+      if(
         /\b(portugal|españa|espana|castell[oó]n|valencia|alicante|madrid|barcelona|gipuzkoa|guipuzcoa|navarra)\b/i.test(siguiente) &&
         !/^(tel|telf|telefono|nif|cif|fax)\b/i.test(siguiente)
       ) {
-        localidad = (localidad + " " + siguiente).trim();
+        localidad=(localidad+" "+siguiente).trim();
       }
-
       break;
     }
 
-    direccionPartes.push(linea);
+    direccion.push(l);
   }
 
   return {
-    destinatario,
-    direccion: direccionPartes.join(" ").trim(),
+    destinatario:limpiarNombre(contenido[0]),
+    direccion:direccion.join(" ").trim(),
     codigoPostal,
     localidad
   };
 }
 
-function limpiarNombre(texto) {
-  return String(texto || "")
-    .replace(/^[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+/, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 function extraerPalets(texto) {
-  const limpio = String(texto || "")
-    .toUpperCase()
-    .replace(/\s+/g, " ");
+  const limpio=String(texto||"")
+    .toUpperCase().replace(/\s+/g," ");
 
-  const patrones = [
+  const patrones=[
     /ORDEN\s+DE\s+CARGA.{0,100}?(\d{1,3})\s*PALETS?/i,
     /ORDEN\s+DE\s+CARGA.{0,100}?(\d{1,3})\s*PALET\b/i,
     /(\d{1,3})\s*PALETS?/i
   ];
 
-  for (const patron of patrones) {
-    const match = limpio.match(patron);
-    if (match) return match[1];
+  for(const p of patrones) {
+    const m=limpio.match(p);
+    if(m) return m[1];
   }
-
   return "";
-}
-
-function extraerFechaEntrega(texto) {
-  const limpio = String(texto || "")
-    .replace(/\n/g, " ")
-    .replace(/\s+/g, " ");
-
-  const match = limpio.match(
-    /FECHA\s*(?:DE\s*)?ENTREGA\s*[:\-]?\s*(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/i
-  );
-
-  if (match) return normalizarFecha(match[1]);
-
-  const lineas = limpiarTextoOCR(texto).split("\n");
-
-  for (let i = 0; i < lineas.length; i++) {
-    if (/fecha\s*(?:de\s*)?entrega/i.test(lineas[i])) {
-      const mismaLinea = lineas[i].match(
-        /(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/
-      );
-
-      if (mismaLinea) {
-        return normalizarFecha(mismaLinea[1]);
-      }
-
-      if (lineas[i + 1]) {
-        const siguiente = lineas[i + 1].match(
-          /(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/
-        );
-
-        if (siguiente) {
-          return normalizarFecha(siguiente[1]);
-        }
-      }
-    }
-  }
-
-  return "";
-}
-
-function normalizarFecha(fecha) {
-  return String(fecha).replace(/[.-]/g, "/");
-}
-
-/*
-  LECTURA DE TOTALES POR COLUMNAS.
-
-  Localiza la fila "Total" y lee por separado:
-  - La columna de cajas.
-  - La columna de kilos brutos.
-
-  Así se evita mezclar los números de otras columnas.
-*/
-async function extraerTotalesPorColumnas(zonaTabla) {
-  try {
-    const lectura = await ocrWorker.recognize(zonaTabla);
-    const tsv = lectura.data && lectura.data.tsv;
-
-    if (!tsv) {
-      return { cajas:"", kilosBrutos:"" };
-    }
-
-    const filas = tsv.trim()
-      .split(/\r?\n/)
-      .slice(1)
-      .map(linea => linea.split("\t"))
-      .filter(c => c.length >= 12)
-      .map(c => ({
-        texto: (c.slice(11).join(" ") || "").trim(),
-        x: Number(c[6]),
-        y: Number(c[7]),
-        w: Number(c[8]),
-        h: Number(c[9])
-      }));
-
-    const totales = filas.filter(f =>
-      /^t[o0]ta[l1i]\s*[:.]?$/i.test(f.texto) &&
-      f.x < zonaTabla.width * 0.25 &&
-      f.h > 0
-    );
-
-    if (!totales.length) {
-      return { cajas:"", kilosBrutos:"" };
-    }
-
-    const fila = totales[totales.length - 1];
-
-    const y = Math.max(
-      0,
-      Math.round(fila.y - fila.h * 0.6)
-    );
-
-    const h = Math.min(
-      zonaTabla.height - y,
-      Math.round(fila.h * 2.3)
-    );
-
-    if (h < 8) {
-      return { cajas:"", kilosBrutos:"" };
-    }
-
-    async function leerColumna(xInicio, xFin) {
-      const x = Math.round(
-        zonaTabla.width * xInicio
-      );
-
-      const ancho = Math.round(
-        zonaTabla.width * (xFin - xInicio)
-      );
-
-      const recorte = document.createElement("canvas");
-
-      recorte.width = ancho * 2;
-      recorte.height = h * 2;
-
-      const ctx = recorte.getContext("2d");
-      ctx.fillStyle = "white";
-
-      ctx.fillRect(
-        0,
-        0,
-        recorte.width,
-        recorte.height
-      );
-
-      ctx.imageSmoothingEnabled = true;
-
-      ctx.drawImage(
-        zonaTabla,
-        x,
-        y,
-        ancho,
-        h,
-        0,
-        0,
-        recorte.width,
-        recorte.height
-      );
-
-      const texto = await reconocer(recorte, "7");
-      const numeros = extraerNumerosOCR(texto);
-
-      return numeros.length === 1
-        ? limpiarNumeroOCR(numeros[0])
-        : "";
-    }
-
-    const cajas = await leerColumna(0.535, 0.605);
-    const kilosBrutos = await leerColumna(0.785, 0.885);
-
-    return {
-      cajas: /^\d{1,6}$/.test(cajas) ? cajas : "",
-      kilosBrutos:
-        /^\d{1,7}(?:[.,]\d{1,2})?$/.test(kilosBrutos)
-          ? kilosBrutos
-          : ""
-    };
-
-  } catch (error) {
-    console.warn(
-      "Lectura de totales por columnas no disponible:",
-      error
-    );
-
-    return { cajas:"", kilosBrutos:"" };
-  }
-}
-
-/*
-  EXTRACCIÓN ALTERNATIVA DE TOTALES.
-
-  Si la lectura por columnas no encuentra las cifras,
-  se intenta recuperarlas a partir del texto OCR.
-*/
-function extraerTotales(...textos) {
-  const candidatos = [];
-
-  for (const texto of textos) {
-    const lineas = limpiarTextoOCR(texto)
-      .split("\n")
-      .map(l => l.trim())
-      .filter(Boolean);
-
-    for (let i = 0; i < lineas.length; i++) {
-      const etiqueta =
-        /\bt[o0]ta[l1i]\b/i.test(lineas[i]) ||
-        /^\s*t[o0]ta[l1i]?\s*$/i.test(lineas[i]);
-
-      if (!etiqueta) continue;
-
-      const bloque = lineas
-        .slice(i, Math.min(lineas.length, i + 5))
-        .join(" ");
-
-      const numeros = extraerNumerosOCR(bloque);
-
-      if (numeros.length >= 2) {
-        candidatos.push({
-          cajas: numeros[0],
-          kilosBrutos: numeros[numeros.length - 1],
-          puntuacion: 100 + Math.min(numeros.length, 6)
-        });
-      }
-    }
-
-    const plano = lineas.join(" ");
-    const indice = plano.search(
-      /\bt[o0]ta[l1i]\b/i
-    );
-
-    if (indice >= 0) {
-      const numeros = extraerNumerosOCR(
-        plano.slice(indice, indice + 180)
-      );
-
-      if (numeros.length >= 2) {
-        candidatos.push({
-          cajas: numeros[0],
-          kilosBrutos: numeros[numeros.length - 1],
-          puntuacion: 90 + Math.min(numeros.length, 6)
-        });
-      }
-    }
-  }
-
-  if (!candidatos.length) {
-    return { cajas:"", kilosBrutos:"" };
-  }
-
-  candidatos.sort(
-    (a, b) => b.puntuacion - a.puntuacion
-  );
-
-  return {
-    cajas: limpiarNumeroOCR(candidatos[0].cajas),
-    kilosBrutos: limpiarNumeroOCR(candidatos[0].kilosBrutos)
-  };
-}
-
-function extraerNumerosOCR(texto) {
-  return String(texto || "").match(
-    /\d+(?:[.,]\d{3})*(?:[.,]\d{1,2})?/g
-  ) || [];
-}
-
-function limpiarNumeroOCR(valor) {
-  return String(valor || "")
-    .replace(/[^\d.,]/g, "")
-    .trim();
 }
 
 function buscarPaletsObservaciones(texto) {
-  const limpio = String(texto || "")
-    .toUpperCase()
-    .replace(/\s+/g, " ");
+  const t=String(texto||"")
+    .toUpperCase().replace(/\s+/g," ");
 
-  const patrones = [
-    /COMENTARIOS?\s+DE\s+CARGA.{0,80}?(\d{1,3})\s*PALETS?/i,
-    /COMENTARIOS?\s+DE\s+CARGA.{0,80}?(\d{1,3})\s*PALET\b/i
-  ];
+  const m=t.match(
+    /COMENTARIOS?\s+DE\s+CARGA.{0,80}?(\d{1,3})\s*PALETS?/i
+  );
+  return m ? m[1] : "";
+}
 
-  for (const patron of patrones) {
-    const match = limpio.match(patron);
-    if (match) return match[1];
+function normalizarFecha(fecha) {
+  return String(fecha||"").replace(/[.-]/g,"/");
+}
+
+function extraerFechaEntrega(texto) {
+  const limpio=String(texto||"")
+    .replace(/\n/g," ")
+    .replace(/\s+/g," ");
+
+  const m=limpio.match(
+    /FECHA\s*(?:DE\s*)?ENTREGA\s*[:\-]?\s*(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/i
+  );
+
+  if(m) return normalizarFecha(m[1]);
+
+  const lineas=limpiarTextoOCR(texto).split("\n");
+
+  for(let i=0;i<lineas.length;i++) {
+    if(!/fecha\s*(?:de\s*)?entrega/i.test(lineas[i]))
+      continue;
+
+    for(const linea of [lineas[i],lineas[i+1]||""]) {
+      const fecha=linea.match(
+        /(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/
+      );
+      if(fecha) return normalizarFecha(fecha[1]);
+    }
   }
+  return "";
+}
+
+/* =====================================
+   NUEVO EXTRACTOR: CAJAS Y KILOS
+
+   1. Localiza la palabra Total.
+   2. Detecta las columnas de la tabla.
+   3. Lee solo las celdas Cajas y Kg brutos.
+   4. Compara dos lecturas independientes.
+   5. Si no coinciden, deja el campo vacío.
+===================================== */
+
+function normalizarCantidad(texto,esPeso) {
+  const s=String(texto||"").replace(/\s/g,"").trim();
+
+  if(!/^\d[\d.,]*$/.test(s)) return "";
+
+  if(!esPeso) {
+    if(!/^\d{1,6}$/.test(s) &&
+       !/^\d{1,3}(?:\.\d{3})+$/.test(s))
+      return "";
+
+    const n=Number(s.replace(/\./g,""));
+    return Number.isInteger(n) && n>=0 && n<1000000
+      ? String(n) : "";
+  }
+
+  // Pesos: 470,53 / 594,00 / 1.890,00 / 2.520,00
+  if(/^\d{1,3}(?:\.\d{3})*,\d{2}$/.test(s))
+    return s;
+
+  if(/^\d{1,6},\d{2}$/.test(s))
+    return s;
+
+  if(/^\d{1,6}\.\d{2}$/.test(s))
+    return s.replace(".",",");
 
   return "";
 }
 
-function esPrimeraPagina(texto) {
-  return Boolean(extraerNumeroSalida(texto));
+async function localizarTotal(canvasPagina) {
+  const H=canvasPagina.height;
+
+  const izquierdo=crearRecorte(
+    canvasPagina,.035,.35,.32,.49
+  );
+
+  for(const modo of ["11","6"]) {
+    await ocrWorker.setParameters({
+      tessedit_pageseg_mode:modo,
+      tessedit_char_whitelist:""
+    });
+
+    const resultado=await ocrWorker.recognize(
+      izquierdo,{}, {tsv:true}
+    );
+
+    const tsv=resultado.data.tsv||"";
+
+    const palabras=tsv.split(/\r?\n/).slice(1)
+      .map(l=>l.split("\t"))
+      .filter(c=>c.length>=12)
+      .map(c=>({
+        texto:(c.slice(11).join(" ")||"").trim(),
+        x:Number(c[6]),
+        y:Number(c[7]),
+        alto:Number(c[9])
+      }));
+
+    const totales=palabras.filter(p=>
+      /^['‘{(]?t[o0]ta[l1i][.:]?$/i.test(p.texto) &&
+      p.alto>5 &&
+      p.x<izquierdo.width*.45
+    );
+
+    if(totales.length) {
+      const fila=totales[totales.length-1];
+
+      return {
+        y:Math.round(H*.35+fila.y),
+        alto:Math.max(12,fila.alto)
+      };
+    }
+  }
+
+  return null;
 }
 
-/* PROCESAMIENTO PRINCIPAL */
+function detectarColumnas(canvas,y,alto) {
+  const W=canvas.width,H=canvas.height;
+  const y0=Math.max(0,Math.floor(y-alto*.3));
+  const y1=Math.min(H,Math.ceil(y+alto*1.5));
+
+  if(y1-y0<10) return null;
+
+  const ctx=canvas.getContext("2d",{
+    willReadFrequently:true
+  });
+
+  const imagen=ctx.getImageData(
+    0,y0,W,y1-y0
+  );
+
+  const pixels=imagen.data;
+  const altura=imagen.height;
+
+  let limites=[];
+  let inicio=-1;
+
+  for(
+    let x=Math.floor(W*.20);
+    x<Math.floor(W*.96);
+    x++
+  ) {
+    let oscuros=0;
+
+    for(let j=0;j<altura;j++) {
+      const k=(j*W+x)*4;
+
+      if(
+        pixels[k]<125 &&
+        pixels[k+1]<125 &&
+        pixels[k+2]<125
+      ) oscuros++;
+    }
+
+    const esLinea=oscuros/altura>=.60;
+
+    if(esLinea && inicio<0) inicio=x;
+
+    if(!esLinea && inicio>=0) {
+      limites.push(Math.round((inicio+x-1)/2));
+      inicio=-1;
+    }
+  }
+
+  if(inicio>=0) limites.push(inicio);
+
+  // Agrupar rayas próximas
+  limites=limites.filter(
+    (x,i,a)=>i===0 || x-a[i-1]>5
+  );
+
+  if(limites.length<6) return null;
+
+  limites=limites.slice(-6);
+
+  const anchuras=limites.slice(1)
+    .map((x,i)=>x-limites[i]);
+
+  if(anchuras.some(a=>
+    a<W*.025 || a>W*.17
+  )) return null;
+
+  return limites;
+}
+
+async function leerCeldaTotal(
+  canvas,izquierda,derecha,y,alto,esPeso
+) {
+  const H=canvas.height;
+  const lecturas=[];
+
+  // Dos recortes ligeramente distintos
+  for(const margen of [.015,.06]) {
+    const espacio=derecha-izquierda;
+
+    const x=Math.round(
+      izquierda+espacio*margen
+    );
+
+    const w=Math.round(
+      espacio*(1-2*margen)
+    );
+
+    const arriba=Math.max(
+      0,Math.round(y-alto*.4)
+    );
+
+    const abajo=Math.min(
+      H,Math.round(y+alto*1.5)
+    );
+
+    if(w<12 || abajo-arriba<10)
+      return "";
+
+    const recorte=document.createElement("canvas");
+    recorte.width=w;
+    recorte.height=abajo-arriba;
+
+    const ctx=recorte.getContext("2d");
+    ctx.fillStyle="white";
+    ctx.fillRect(0,0,w,recorte.height);
+
+    ctx.drawImage(
+      canvas,
+      x,arriba,w,abajo-arriba,
+      0,0,w,recorte.height
+    );
+
+    await ocrWorker.setParameters({
+      tessedit_pageseg_mode:"6",
+      tessedit_char_whitelist:"0123456789.,"
+    });
+
+    const resultado=await ocrWorker.recognize(recorte);
+
+    const valor=normalizarCantidad(
+      (resultado.data.text||"").replace(/\s+/g,""),
+      esPeso
+    );
+
+    if(valor) lecturas.push(valor);
+  }
+
+  await ocrWorker.setParameters({
+    tessedit_char_whitelist:""
+  });
+
+  if(
+    lecturas.length!==2 ||
+    lecturas[0]!==lecturas[1]
+  ) return "";
+
+  return lecturas[0];
+}
+
+async function extraerTotalesPorColumnas(canvas) {
+  const vacio={
+    cajas:"",
+    kilosBrutos:""
+  };
+
+  try {
+    const total=await localizarTotal(canvas);
+
+    if(!total) return vacio;
+
+    const limites=detectarColumnas(
+      canvas,total.y,total.alto
+    );
+
+    if(!limites) return vacio;
+
+    /*
+      Límites detectados de derecha a izquierda:
+
+      Descripción | Cajas | Unidades |
+      Kg netos | Kg brutos | Caducidad
+
+      Entre límites [0] y [1]: CAJAS
+      Entre límites [3] y [4]: KG BRUTOS
+    */
+
+    const cajas=await leerCeldaTotal(
+      canvas,
+      limites[0],
+      limites[1],
+      total.y,
+      total.alto,
+      false
+    );
+
+    const kilosBrutos=await leerCeldaTotal(
+      canvas,
+      limites[3],
+      limites[4],
+      total.y,
+      total.alto,
+      true
+    );
+
+    return {cajas,kilosBrutos};
+
+  } catch(error) {
+    console.warn(
+      "Error en extracción de totales:",
+      error
+    );
+
+    try {
+      await ocrWorker.setParameters({
+        tessedit_char_whitelist:""
+      });
+    } catch(e) {}
+
+    return vacio;
+  }
+}
+
+/* ============================
+   PROCESAMIENTO PRINCIPAL
+============================ */
+
 async function procesarPDF() {
-  if (
+  if(
     !selectedFile ||
     !maestroDestinatarios.length ||
     procesando
   ) return;
 
-  procesando = true;
-  processBtn.disabled = true;
-  exportBtn.disabled = true;
-  resultados = [];
-  resultsContainer.innerHTML = "";
-  hideMessage();
+  procesando=true;
+  processBtn.disabled=true;
+  exportBtn.disabled=true;
+
+  resultados=[];
+  resultsContainer.innerHTML="";
+  ocultarMensaje();
 
   try {
-    mostrarMensaje(
-      "Iniciando lectura del PDF y OCR...",
-      "info"
-    );
+    actualizarProgreso(0,"Cargando PDF...");
+    statusTitle.textContent="Preparando reconocimiento OCR";
 
-    actualizarProgreso(0, "Cargando PDF...");
-
-    const pdfData = new Uint8Array(
+    const datos=new Uint8Array(
       await selectedFile.arrayBuffer()
     );
 
-    const pdf = await pdfjsLib.getDocument({
-      data:pdfData
+    const pdf=await pdfjsLib.getDocument({
+      data:datos
     }).promise;
 
-    statusTitle.textContent =
-      "Preparando reconocimiento de texto";
+    ocrWorker=await Tesseract.createWorker("spa");
 
-    ocrWorker = await Tesseract.createWorker("spa");
+    let albaranActual=null;
 
-    let albaranActual = null;
-
-    for (
-      let numeroPagina = 1;
-      numeroPagina <= pdf.numPages;
+    for(
+      let numeroPagina=1;
+      numeroPagina<=pdf.numPages;
       numeroPagina++
     ) {
       actualizarProgreso(
-        ((numeroPagina - 1) / pdf.numPages) * 100,
+        (numeroPagina-1)/pdf.numPages*100,
         `Analizando página ${numeroPagina} de ${pdf.numPages}...`
       );
 
-      const page = await pdf.getPage(numeroPagina);
-      const viewport = page.getViewport({ scale:3 });
+      const pagina=await pdf.getPage(numeroPagina);
+      const viewport=pagina.getViewport({scale:3});
 
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.floor(viewport.width);
-      canvas.height = Math.floor(viewport.height);
+      const canvas=document.createElement("canvas");
+      canvas.width=Math.floor(viewport.width);
+      canvas.height=Math.floor(viewport.height);
 
-      const context = canvas.getContext("2d", {
-        willReadFrequently:true
-      });
-
-      await page.render({
-        canvasContext:context,
-        viewport:viewport
+      await pagina.render({
+        canvasContext:canvas.getContext("2d",{
+          willReadFrequently:true
+        }),
+        viewport
       }).promise;
 
-      const zonaCabecera = crearRecorte(
-        canvas,
-        0.035,
-        0.235,
-        0.94,
-        0.17
+      const zonaCabecera=crearRecorte(
+        canvas,.035,.235,.94,.17
       );
 
-      const textoCabecera = await reconocer(
-        zonaCabecera,
-        "6"
+      const textoCabecera=await reconocer(
+        zonaCabecera,"6"
       );
 
-      const numeroSalida =
-        extraerNumeroSalida(textoCabecera);
-
-      const zonaDestinatario = crearRecorte(
-        canvas,
-        0.54,
-        0.135,
-        0.445,
-        0.17
+      const numeroSalida=extraerNumeroSalida(
+        textoCabecera
       );
 
-      const textoDestinatario = await reconocer(
-        zonaDestinatario,
-        "6"
+      const zonaDestinatario=crearRecorte(
+        canvas,.54,.135,.445,.17
       );
 
-      /*
-        Zona amplia: permite encontrar la fila
-        Total en tablas de diferentes alturas.
-      */
-      const zonaTabla = crearRecorte(
-        canvas,
-        0.035,
-        0.35,
-        0.93,
-        0.57
+      const textoDestinatario=await reconocer(
+        zonaDestinatario,"6"
       );
 
-      const textoTabla = await reconocer(
-        zonaTabla,
-        "6"
+      const zonaTabla=crearRecorte(
+        canvas,.035,.35,.93,.57
       );
 
-      const zonaTotales = crearRecorte(
-        canvas,
-        0.035,
-        0.35,
-        0.93,
-        0.32
-      );
+      const textoTabla=await reconocer(zonaTabla,"6");
 
-      const textoTotales = await reconocer(
-        zonaTotales,
-        "6"
-      );
+      // Nuevo sistema de lectura
+      const totalesPagina=
+        await extraerTotalesPorColumnas(canvas);
 
-      const textoTotalesAlternativo =
-        await reconocer(zonaTotales, "11");
-
-      const totalesColumnas =
-        await extraerTotalesPorColumnas(zonaTabla);
-
-      const totalesOCR = extraerTotales(
-        textoTotales,
-        textoTotalesAlternativo,
-        textoTabla
-      );
-
-      const totalesPagina = {
-        cajas:
-          totalesColumnas.cajas ||
-          totalesOCR.cajas,
-
-        kilosBrutos:
-          totalesColumnas.kilosBrutos ||
-          totalesOCR.kilosBrutos
-      };
-
-      if (numeroSalida) {
-        const datosDestinatario =
+      if(numeroSalida) {
+        const datosDestino=
           extraerDatosDestinatario(textoDestinatario);
 
-        const totales = totalesPagina;
+        let palets=extraerPalets(textoCabecera);
 
-        let palets = extraerPalets(textoCabecera);
-
-        if (!palets) {
-          palets = buscarPaletsObservaciones(
-            textoTabla
-          );
+        if(!palets) {
+          palets=buscarPaletsObservaciones(textoTabla);
         }
 
-        let albaranActualNuevo = {
-          destinatario:datosDestinatario.destinatario,
-          direccion:datosDestinatario.direccion,
-          codigoPostal:datosDestinatario.codigoPostal,
-          localidad:datosDestinatario.localidad,
-          cajas:totales.cajas,
-          kilosBrutos:totales.kilosBrutos,
+        const nuevo={
+          destinatario:datosDestino.destinatario,
+          direccion:datosDestino.direccion,
+          codigoPostal:datosDestino.codigoPostal,
+          localidad:datosDestino.localidad,
+          cajas:totalesPagina.cajas,
+          kilosBrutos:totalesPagina.kilosBrutos,
           palets,
           numeroSalida,
           fechaEntrega:extraerFechaEntrega(textoCabecera),
           pagina:numeroPagina
         };
 
-        const existente = resultados.find(
-          r => r.numeroSalida === numeroSalida
+        const existente=resultados.find(
+          r=>r.numeroSalida===numeroSalida
         );
 
-        if (!existente) {
-          resultados.push(albaranActualNuevo);
-          albaranActual = albaranActualNuevo;
+        if(!existente) {
+          resultados.push(nuevo);
+          albaranActual=nuevo;
         } else {
-          albaranActual = existente;
+          albaranActual=existente;
         }
 
-      } else if (albaranActual) {
-        /*
-          Si es continuación de un albarán anterior,
-          completar los datos que falten.
-        */
-        if (
+      } else if(albaranActual) {
+        // Página de continuación
+        if(
           !albaranActual.cajas &&
           totalesPagina.cajas
         ) {
-          albaranActual.cajas =
-            totalesPagina.cajas;
+          albaranActual.cajas=totalesPagina.cajas;
         }
 
-        if (
+        if(
           !albaranActual.kilosBrutos &&
           totalesPagina.kilosBrutos
         ) {
-          albaranActual.kilosBrutos =
+          albaranActual.kilosBrutos=
             totalesPagina.kilosBrutos;
         }
 
-        if (!albaranActual.palets) {
-          const palets =
-            buscarPaletsObservaciones(textoTabla);
-
-          if (palets) {
-            albaranActual.palets = palets;
-          }
+        if(!albaranActual.palets) {
+          const p=buscarPaletsObservaciones(textoTabla);
+          if(p) albaranActual.palets=p;
         }
       }
 
       actualizarProgreso(
-        (numeroPagina / pdf.numPages) * 100,
-        `Albaranes detectados: ${resultados.length}. Página ${numeroPagina} de ${pdf.numPages}.`
+        numeroPagina/pdf.numPages*100,
+        `Página ${numeroPagina}/${pdf.numPages}. Albaranes: ${resultados.length}.`
       );
     }
 
     await ocrWorker.terminate();
-    ocrWorker = null;
+    ocrWorker=null;
 
-    if (!resultados.length) {
+    if(!resultados.length) {
       throw new Error(
-        "No se han detectado números de salida. Comprueba el formato del PDF."
+        "No se han detectado albaranes en el PDF."
       );
     }
 
     vincularDestinatarios();
     renderizarResultados();
 
-    const exactas = resultados.filter(
-      r => r.estadoVinculacion === "EXACTA"
+    const exactas=resultados.filter(
+      r=>r.estadoVinculacion==="EXACTA"
     ).length;
 
-    const aproximadas = resultados.filter(
-      r => r.estadoVinculacion === "APROXIMADA"
+    const aproximadas=resultados.filter(
+      r=>r.estadoVinculacion==="APROXIMADA"
     ).length;
 
-    const sinCoincidencia = resultados.filter(
-      r => r.estadoVinculacion === "SIN COINCIDENCIA"
+    const sin=resultados.filter(
+      r=>r.estadoVinculacion==="SIN COINCIDENCIA"
     ).length;
 
     actualizarProgreso(
-      100,
-      "Extracción y vinculación finalizadas."
+      100,"Extracción y vinculación finalizadas."
     );
 
-    statusTitle.textContent = "Proceso finalizado";
+    statusTitle.textContent="Proceso finalizado";
 
     mostrarMensaje(
-      `Proceso terminado: ${resultados.length} albaranes. ${exactas} coincidencias exactas, ${aproximadas} aproximadas y ${sinCoincidencia} sin coincidencia.`,
+      `Proceso terminado: ${resultados.length} albaranes. `+
+      `${exactas} exactos, ${aproximadas} aproximados y `+
+      `${sin} sin coincidencia. Revisa los campos vacíos.`,
       "info"
     );
 
-    exportBtn.disabled = false;
+    exportBtn.disabled=false;
 
-  } catch (error) {
-    console.error("Error Inlet Albaranes:", error);
+  } catch(error) {
+    console.error(error);
 
-    if (ocrWorker) {
+    if(ocrWorker) {
       try {
         await ocrWorker.terminate();
       } catch(e) {}
-
-      ocrWorker = null;
+      ocrWorker=null;
     }
 
     mostrarMensaje(
-      "No se ha podido completar el procesamiento: " +
-      error.message,
+      "Error al procesar: "+error.message,
       "error"
     );
 
   } finally {
-    procesando = false;
+    procesando=false;
     actualizarBotonProcesar();
   }
+}
+
+/* ============================
+   TABLA EDITABLE
+============================ */
+
+function escaparHTML(valor) {
+  return String(valor??"")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
 }
 
 function estaCompleto(r) {
@@ -1404,204 +1352,160 @@ function estaCompleto(r) {
   );
 }
 
-/* TABLA EDITABLE */
 function renderizarResultados() {
-  let html = `
-    <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Destinatario extraído</th>
-          <th>Dirección</th>
-          <th>Código postal</th>
-          <th>Localidad extraída</th>
-          <th>Total cajas</th>
-          <th>Kilos brutos</th>
-          <th>Palets</th>
-          <th>Nº albarán</th>
-          <th>Fecha entrega</th>
-          <th>Destinatario maestro (editable)</th>
-          <th>Población maestro</th>
-          <th>TIERS</th>
-          <th>Estado vinculación</th>
-          <th>Página</th>
-          <th>Estado datos</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
+  let html=`
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Destinatario extraído</th>
+        <th>Dirección</th>
+        <th>Código postal</th>
+        <th>Localidad extraída</th>
+        <th>Total cajas</th>
+        <th>Kilos brutos</th>
+        <th>Palets</th>
+        <th>Nº albarán</th>
+        <th>Fecha entrega</th>
+        <th>Destinatario maestro (editable)</th>
+        <th>Población maestro</th>
+        <th>TIERS</th>
+        <th>Estado vinculación</th>
+        <th>Página</th>
+        <th>Estado datos</th>
+      </tr>
+    </thead>
+    <tbody>`;
 
-  resultados.forEach((r, index) => {
-    const completo = estaCompleto(r);
-    const estado =
-      r.estadoVinculacion || "SIN COINCIDENCIA";
+  resultados.forEach((r,index)=>{
+    const completo=estaCompleto(r);
+    const estado=r.estadoVinculacion||"SIN COINCIDENCIA";
 
-    const claseEstado = estado === "EXACTA"
-      ? "exact"
-      : estado === "APROXIMADA"
-        ? "fuzzy"
-        : estado === "MANUAL"
-          ? "manual"
-          : "none";
+    const clase=estado==="EXACTA" ? "exact" :
+      estado==="APROXIMADA" ? "fuzzy" :
+      estado==="MANUAL" ? "manual" : "none";
 
-    const opcionesMaestro = [
+    const opciones=[
       `<option value="">-- Sin asignar --</option>`,
-      ...maestroDestinatarios.map((m, i) =>
-        `<option value="${i}" ${String(i) === String(r.indiceMaestro) ? "selected" : ""}>${escaparHTML(m.destinatario)} — ${escaparHTML(m.poblacion)}${m.tiers ? " (" + escaparHTML(m.tiers) + ")" : ""}</option>`
+      ...maestroDestinatarios.map((m,i)=>
+        `<option value="${i}" ${String(i)===String(r.indiceMaestro)?"selected":""}>${escaparHTML(m.destinatario)} — ${escaparHTML(m.poblacion)} (${escaparHTML(m.tiers)})</option>`
       )
     ].join("");
 
-    html += `
-      <tr class="${completo ? "complete" : "review"}">
-        <td><input class="wide" data-index="${index}" data-field="destinatario" value="${escaparHTML(r.destinatario)}"></td>
-        <td><input class="wide" data-index="${index}" data-field="direccion" value="${escaparHTML(r.direccion)}"></td>
-        <td><input data-index="${index}" data-field="codigoPostal" value="${escaparHTML(r.codigoPostal)}"></td>
-        <td><input class="wide" data-index="${index}" data-field="localidad" value="${escaparHTML(r.localidad)}"></td>
-        <td><input data-index="${index}" data-field="cajas" value="${escaparHTML(r.cajas)}"></td>
-        <td><input data-index="${index}" data-field="kilosBrutos" value="${escaparHTML(r.kilosBrutos)}"></td>
-        <td><input data-index="${index}" data-field="palets" value="${escaparHTML(r.palets)}"></td>
-        <td><input data-index="${index}" data-field="numeroSalida" value="${escaparHTML(r.numeroSalida)}"></td>
-        <td><input data-index="${index}" data-field="fechaEntrega" value="${escaparHTML(r.fechaEntrega)}" placeholder="No indicada"></td>
-        <td><select data-match-index="${index}">${opcionesMaestro}</select></td>
-        <td>${escaparHTML(r.poblacionMaestro || "—")}</td>
-        <td><strong>${escaparHTML(r.tiers || "—")}</strong></td>
-        <td><span class="match-pill ${claseEstado}">${escaparHTML(estado)}</span></td>
+    const campo=(nombre,ancho="")=>
+      `<input class="${ancho}" data-index="${index}" data-field="${nombre}" value="${escaparHTML(r[nombre])}">`;
+
+    html+=`
+      <tr class="${completo?"complete":"review"}">
+        <td>${campo("destinatario","wide")}</td>
+        <td>${campo("direccion","wide")}</td>
+        <td>${campo("codigoPostal")}</td>
+        <td>${campo("localidad","wide")}</td>
+        <td>${campo("cajas")}</td>
+        <td>${campo("kilosBrutos")}</td>
+        <td>${campo("palets")}</td>
+        <td>${campo("numeroSalida")}</td>
+        <td>${campo("fechaEntrega")}</td>
+        <td><select data-match-index="${index}">${opciones}</select></td>
+        <td>${escaparHTML(r.poblacionMaestro||"—")}</td>
+        <td><strong>${escaparHTML(r.tiers||"—")}</strong></td>
+        <td><span class="match-pill ${clase}">${escaparHTML(estado)}</span></td>
         <td class="page-cell">${r.pagina}</td>
-        <td>${completo ? "Completo" : "Revisar"}</td>
-      </tr>
-    `;
+        <td>${completo?"Completo":"Revisar"}</td>
+      </tr>`;
   });
 
-  html += `</tbody></table></div>`;
-  resultsContainer.innerHTML = html;
+  html+="</tbody></table></div>";
+  resultsContainer.innerHTML=html;
 
-  resultsContainer
-    .querySelectorAll("input[data-index]")
-    .forEach(input => {
-      input.addEventListener("input", event => {
-        const index = Number(
-          event.target.dataset.index
-        );
+  resultsContainer.querySelectorAll(
+    "input[data-index]"
+  ).forEach(input=>{
+    input.addEventListener("input",e=>{
+      const i=Number(e.target.dataset.index);
+      const campo=e.target.dataset.field;
 
-        const field =
-          event.target.dataset.field;
+      resultados[i][campo]=e.target.value;
 
-        resultados[index][field] =
-          event.target.value;
+      const fila=e.target.closest("tr");
+      const completo=estaCompleto(resultados[i]);
 
-        const fila =
-          event.target.closest("tr");
+      fila.classList.toggle("complete",completo);
+      fila.classList.toggle("review",!completo);
 
-        const completo =
-          estaCompleto(resultados[index]);
+      fila.lastElementChild.textContent=
+        completo?"Completo":"Revisar";
 
-        fila.classList.toggle(
-          "complete",
-          completo
-        );
-
-        fila.classList.toggle(
-          "review",
-          !completo
-        );
-
-        fila.lastElementChild.textContent =
-          completo ? "Completo" : "Revisar";
-
-        actualizarResumen();
-      });
+      actualizarResumen();
     });
+  });
 
-  resultsContainer
-    .querySelectorAll("select[data-match-index]")
-    .forEach(select => {
-      select.addEventListener("change", event => {
-        const index = Number(
-          event.target.dataset.matchIndex
+  resultsContainer.querySelectorAll(
+    "select[data-match-index]"
+  ).forEach(select=>{
+    select.addEventListener("change",e=>{
+      const i=Number(e.target.dataset.matchIndex);
+      const valor=e.target.value;
+
+      if(valor==="") {
+        aplicarCoincidencia(resultados[i],null);
+      } else {
+        aplicarCoincidencia(
+          resultados[i],
+          {
+            indice:Number(valor),
+            candidato:maestroDestinatarios[Number(valor)],
+            similitudNombre:1
+          },
+          true
         );
+      }
 
-        const valor = event.target.value;
-
-        if (valor === "") {
-          aplicarCoincidencia(
-            resultados[index],
-            null
-          );
-        } else {
-          aplicarCoincidencia(
-            resultados[index],
-            {
-              indice:Number(valor),
-              candidato:
-                maestroDestinatarios[Number(valor)],
-              similitudNombre:1
-            },
-            true
-          );
-        }
-
-        renderizarResultados();
-      });
+      renderizarResultados();
     });
+  });
 
   actualizarResumen();
 
-  document.getElementById("legend").style.display =
-    "flex";
-
-  document.getElementById("summary").style.display =
-    "flex";
+  document.getElementById("summary").style.display="flex";
+  document.getElementById("legend").style.display="flex";
 }
 
 function actualizarResumen() {
-  const completos =
-    resultados.filter(estaCompleto).length;
+  const poner=(id,valor)=>
+    document.getElementById(id).textContent=valor;
 
-  const revisar =
-    resultados.length - completos;
+  const completos=resultados.filter(estaCompleto).length;
 
-  document.getElementById(
-    "totalAlbaranes"
-  ).textContent = resultados.length;
+  poner("totalAlbaranes",resultados.length);
+  poner("completeCount",completos);
+  poner("reviewCount",resultados.length-completos);
 
-  document.getElementById(
-    "completeCount"
-  ).textContent = completos;
+  poner("exactCount",resultados.filter(
+    r=>r.estadoVinculacion==="EXACTA"
+  ).length);
 
-  document.getElementById(
-    "reviewCount"
-  ).textContent = revisar;
+  poner("fuzzyCount",resultados.filter(
+    r=>r.estadoVinculacion==="APROXIMADA"
+  ).length);
 
-  document.getElementById(
-    "exactCount"
-  ).textContent = resultados.filter(
-    r => r.estadoVinculacion === "EXACTA"
-  ).length;
+  poner("noMatchCount",resultados.filter(
+    r=>r.estadoVinculacion==="SIN COINCIDENCIA"
+  ).length);
 
-  document.getElementById(
-    "fuzzyCount"
-  ).textContent = resultados.filter(
-    r => r.estadoVinculacion === "APROXIMADA"
-  ).length;
-
-  document.getElementById(
-    "noMatchCount"
-  ).textContent = resultados.filter(
-    r => r.estadoVinculacion === "SIN COINCIDENCIA"
-  ).length;
-
-  document.getElementById(
-    "manualCount"
-  ).textContent = resultados.filter(
-    r => r.estadoVinculacion === "MANUAL"
-  ).length;
+  poner("manualCount",resultados.filter(
+    r=>r.estadoVinculacion==="MANUAL"
+  ).length);
 }
 
-/* EXPORTAR EXCEL */
-function exportarExcel() {
-  if (!resultados.length) return;
+/* ============================
+   EXPORTACIÓN A EXCEL
+============================ */
 
-  const filas = resultados.map(r => ({
+function exportarExcel() {
+  if(!resultados.length) return;
+
+  const filas=resultados.map(r=>({
     "Destinatario":r.destinatario,
     "Dirección":r.direccion,
     "Código postal":r.codigoPostal,
@@ -1615,83 +1519,66 @@ function exportarExcel() {
     "Población maestro":r.poblacionMaestro,
     "TIERS":r.tiers,
     "Estado vinculación":r.estadoVinculacion,
-    "Similitud destinatario":
-      r.similitud
-        ? Math.round(r.similitud * 100) + "%"
-        : ""
+    "Similitud destinatario":r.similitud
+      ? Math.round(r.similitud*100)+"%" : ""
   }));
 
-  const worksheet = XLSX.utils.json_to_sheet(filas);
+  const hoja=XLSX.utils.json_to_sheet(filas);
 
-  worksheet["!cols"] = [
-    { wch:35 },
-    { wch:40 },
-    { wch:14 },
-    { wch:35 },
-    { wch:15 },
-    { wch:18 },
-    { wch:15 },
-    { wch:22 },
-    { wch:18 },
-    { wch:35 },
-    { wch:25 },
-    { wch:16 },
-    { wch:22 },
-    { wch:20 }
+  hoja["!cols"]=[
+    {wch:35},{wch:40},{wch:14},{wch:35},
+    {wch:15},{wch:18},{wch:15},{wch:22},
+    {wch:18},{wch:35},{wch:25},{wch:16},
+    {wch:22},{wch:20}
   ];
 
-  const workbook = XLSX.utils.book_new();
+  const libro=XLSX.utils.book_new();
 
   XLSX.utils.book_append_sheet(
-    workbook,
-    worksheet,
-    "Inlet Albaranes"
+    libro,hoja,"Inlet Albaranes"
   );
 
-  const fecha = new Date()
-    .toISOString()
-    .slice(0, 10);
+  const fecha=new Date().toISOString().slice(0,10);
 
   XLSX.writeFile(
-    workbook,
+    libro,
     `INLET_ALBARANES_${fecha}.xlsx`
   );
 }
 
-/* LIMPIAR */
+/* ============================
+   LIMPIAR APLICACIÓN
+============================ */
+
 function limpiar() {
-  if (procesando) return;
+  if(procesando) return;
 
-  selectedFile = null;
-  selectedMasterFile = null;
-  maestroDestinatarios = [];
-  resultados = [];
+  selectedFile=null;
+  selectedMasterFile=null;
+  maestroDestinatarios=[];
+  resultados=[];
 
-  pdfInput.value = "";
-  masterInput.value = "";
+  pdfInput.value="";
+  masterInput.value="";
 
-  fileName.textContent =
+  document.getElementById("fileName").textContent=
     "Ningún PDF seleccionado";
 
-  masterFileName.textContent =
+  document.getElementById("masterFileName").textContent=
     "Ningún maestro seleccionado";
 
-  processBtn.disabled = true;
-  selectMasterBtn.disabled = false;
-  exportBtn.disabled = true;
+  processBtn.disabled=true;
+  exportBtn.disabled=true;
 
-  resultsContainer.innerHTML = "";
-  statusBox.style.display = "none";
+  resultsContainer.innerHTML="";
+  statusBox.style.display="none";
 
-  document.getElementById("summary").style.display =
-    "none";
+  document.getElementById("summary").style.display="none";
+  document.getElementById("legend").style.display="none";
 
-  document.getElementById("legend").style.display =
-    "none";
-
-  hideMessage();
+  ocultarMensaje();
 }
-</script>
 
+</script>
 </body>
 </html>
