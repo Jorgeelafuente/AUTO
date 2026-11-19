@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -250,9 +251,9 @@ td select{
   <h1>INLET ALBARANES</h1>
 
   <p class="description">
-    Sube el PDF de albaranes y el maestro Excel de destinatarios. El sistema
-    extraerá los datos del PDF y los vinculará con el maestro para recuperar
-    el código TIERS antes de generar el Excel.
+    Sube el PDF de albaranes y el maestro Excel de destinatarios.
+    El sistema extraerá los datos del PDF y los vinculará con el
+    maestro para recuperar el código TIERS antes de generar el Excel.
   </p>
 
   <div class="controls">
@@ -319,14 +320,12 @@ td select{
     <span class="orange">Coincidencia aproximada (revisar)</span>
     <span class="red">Sin coincidencia</span>
   </div>
-
 </div>
 
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
 
-/* ELEMENTOS */
 const pdfInput = document.getElementById("pdfInput");
 const selectPdfBtn = document.getElementById("selectPdfBtn");
 const masterInput = document.getElementById("masterInput");
@@ -350,7 +349,6 @@ let resultados = [];
 let ocrWorker = null;
 let procesando = false;
 
-/* EVENTOS */
 selectPdfBtn.addEventListener("click", () => pdfInput.click());
 selectMasterBtn.addEventListener("click", () => masterInput.click());
 
@@ -403,7 +401,6 @@ processBtn.addEventListener("click", procesarPDF);
 exportBtn.addEventListener("click", exportarExcel);
 resetBtn.addEventListener("click", limpiar);
 
-/* UTILIDADES */
 function mostrarMensaje(texto, tipo="info") {
   message.className = "message " + tipo;
   message.textContent = texto;
@@ -430,6 +427,7 @@ function reiniciarResultados() {
 async function leerMaestroDestinatarios(archivo) {
   const datos = new Uint8Array(await archivo.arrayBuffer());
   const libro = XLSX.read(datos, { type:"array" });
+
   const nombreHoja = libro.SheetNames.find(nombre =>
     normalizar(nombre) === normalizar("TIERS DESTINO")
   );
@@ -439,7 +437,11 @@ async function leerMaestroDestinatarios(archivo) {
   }
 
   const hoja = libro.Sheets[nombreHoja];
-  const filas = XLSX.utils.sheet_to_json(hoja, { header:1, defval:"", raw:false });
+  const filas = XLSX.utils.sheet_to_json(hoja, {
+    header:1,
+    defval:"",
+    raw:false
+  });
 
   let filaCabecera = -1;
   let colDestinatario = -1;
@@ -449,7 +451,9 @@ async function leerMaestroDestinatarios(archivo) {
   for (let i = 0; i < Math.min(filas.length, 10); i++) {
     const cabeceras = filas[i].map(valor => normalizar(valor));
     const d = cabeceras.indexOf("destinatario");
-    const p = cabeceras.findIndex(valor => valor === "poblacion" || valor === "población");
+    const p = cabeceras.findIndex(valor =>
+      valor === "poblacion" || valor === "población"
+    );
     const t = cabeceras.indexOf("tiers");
 
     if (d >= 0 && p >= 0 && t >= 0) {
@@ -462,7 +466,9 @@ async function leerMaestroDestinatarios(archivo) {
   }
 
   if (filaCabecera < 0) {
-    throw new Error('La hoja debe contener las columnas DESTINATARIO, POBLACIÓN y TIERS.');
+    throw new Error(
+      'La hoja debe contener las columnas DESTINATARIO, POBLACIÓN y TIERS.'
+    );
   }
 
   const maestro = filas.slice(filaCabecera + 1)
@@ -474,7 +480,9 @@ async function leerMaestroDestinatarios(archivo) {
     .filter(registro => registro.destinatario && registro.poblacion);
 
   if (!maestro.length) {
-    throw new Error("No se han encontrado destinatarios con población en el maestro.");
+    throw new Error(
+      "No se han encontrado destinatarios con población en el maestro."
+    );
   }
 
   return maestro;
@@ -482,7 +490,8 @@ async function leerMaestroDestinatarios(archivo) {
 
 function actualizarProgreso(porcentaje, texto) {
   statusBox.style.display = "block";
-  progressBar.style.width = Math.max(0, Math.min(100, porcentaje)) + "%";
+  progressBar.style.width =
+    Math.max(0, Math.min(100, porcentaje)) + "%";
   progressText.textContent = texto;
 }
 
@@ -496,7 +505,11 @@ function normalizar(texto) {
 }
 
 function distanciaLevenshtein(a, b) {
-  const matriz = Array.from({ length:b.length + 1 }, () => []);
+  const matriz = Array.from(
+    { length:b.length + 1 },
+    () => []
+  );
+
   for (let i = 0; i <= b.length; i++) matriz[i][0] = i;
   for (let j = 0; j <= a.length; j++) matriz[0][j] = j;
 
@@ -511,13 +524,16 @@ function distanciaLevenshtein(a, b) {
           );
     }
   }
+
   return matriz[b.length][a.length];
 }
 
 function calcularSimilitud(a, b) {
   if (a === b) return 1;
   if (!a || !b) return 0;
-  return 1 - distanciaLevenshtein(a, b) / Math.max(a.length, b.length);
+
+  return 1 - distanciaLevenshtein(a, b) /
+    Math.max(a.length, b.length);
 }
 
 function normalizarSegmentoLocalidad(texto) {
@@ -533,11 +549,17 @@ function puntuarPoblacion(localidadAlbaran, poblacionMaestro) {
   const poblacion = normalizarSegmentoLocalidad(poblacionMaestro);
   if (!poblacion) return 0;
 
-  const localidadCompleta = normalizarSegmentoLocalidad(localidadAlbaran);
+  const localidadCompleta =
+    normalizarSegmentoLocalidad(localidadAlbaran);
+
   if (!localidadCompleta) return 0;
 
-  // La población del maestro puede estar acompañada de provincia y país en el albarán.
-  const expresion = new RegExp("(^| )" + poblacion.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "( |$)");
+  const expresion = new RegExp(
+    "(^| )" +
+    poblacion.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") +
+    "( |$)"
+  );
+
   if (expresion.test(localidadCompleta)) return 1;
 
   const segmentos = String(localidadAlbaran || "")
@@ -546,15 +568,21 @@ function puntuarPoblacion(localidadAlbaran, poblacionMaestro) {
     .filter(Boolean);
 
   let mejor = calcularSimilitud(localidadCompleta, poblacion);
+
   for (const segmento of segmentos) {
-    mejor = Math.max(mejor, calcularSimilitud(segmento, poblacion));
+    mejor = Math.max(
+      mejor,
+      calcularSimilitud(segmento, poblacion)
+    );
   }
+
   return mejor;
 }
 
 function buscarCoincidenciaDestinatario(registro) {
   const nombreAlbaran = normalizar(registro.destinatario);
   const localidadAlbaran = registro.localidad || "";
+
   if (!nombreAlbaran || !localidadAlbaran) return null;
 
   let mejor = null;
@@ -564,14 +592,19 @@ function buscarCoincidenciaDestinatario(registro) {
       nombreAlbaran,
       normalizar(candidato.destinatario)
     );
+
     const similitudPoblacion = puntuarPoblacion(
       localidadAlbaran,
       candidato.poblacion
     );
 
-    if (similitudNombre < 0.80 || similitudPoblacion < 0.80) return;
+    if (similitudNombre < 0.80 ||
+        similitudPoblacion < 0.80) return;
 
-    const puntuacion = (similitudNombre * 0.7) + (similitudPoblacion * 0.3);
+    const puntuacion =
+      (similitudNombre * 0.7) +
+      (similitudPoblacion * 0.3);
+
     if (!mejor || puntuacion > mejor.puntuacion) {
       mejor = {
         indice,
@@ -579,7 +612,9 @@ function buscarCoincidenciaDestinatario(registro) {
         similitudNombre,
         similitudPoblacion,
         puntuacion,
-        exacta: similitudNombre === 1 && similitudPoblacion === 1
+        exacta:
+          similitudNombre === 1 &&
+          similitudPoblacion === 1
       };
     }
   });
@@ -598,12 +633,18 @@ function aplicarCoincidencia(registro, coincidencia, manual=false) {
     return;
   }
 
-  const maestro = coincidencia.candidato || maestroDestinatarios[coincidencia.indice];
+  const maestro =
+    coincidencia.candidato ||
+    maestroDestinatarios[coincidencia.indice];
+
   registro.indiceMaestro = String(coincidencia.indice);
   registro.destinatarioMaestro = maestro.destinatario;
   registro.poblacionMaestro = maestro.poblacion;
   registro.tiers = maestro.tiers;
-  registro.similitud = manual ? null : (coincidencia.similitudNombre ?? 1);
+  registro.similitud = manual
+    ? null
+    : (coincidencia.similitudNombre ?? 1);
+
   registro.estadoVinculacion = manual
     ? "MANUAL"
     : (coincidencia.exacta ? "EXACTA" : "APROXIMADA");
@@ -611,7 +652,9 @@ function aplicarCoincidencia(registro, coincidencia, manual=false) {
 
 function vincularDestinatarios() {
   resultados.forEach(registro => {
-    const coincidencia = buscarCoincidenciaDestinatario(registro);
+    const coincidencia =
+      buscarCoincidenciaDestinatario(registro);
+
     aplicarCoincidencia(registro, coincidencia);
   });
 }
@@ -633,12 +676,14 @@ function escaparHTML(valor) {
     .replace(/'/g, "&#039;");
 }
 
-/* CREAR RECORTES */
 function crearRecorte(canvas, x, y, ancho, alto) {
   const recorte = document.createElement("canvas");
 
-  recorte.width = Math.max(1, Math.floor(canvas.width * ancho));
-  recorte.height = Math.max(1, Math.floor(canvas.height * alto));
+  recorte.width =
+    Math.max(1, Math.floor(canvas.width * ancho));
+
+  recorte.height =
+    Math.max(1, Math.floor(canvas.height * alto));
 
   const ctx = recorte.getContext("2d");
 
@@ -657,29 +702,29 @@ function crearRecorte(canvas, x, y, ancho, alto) {
   return recorte;
 }
 
-/* OCR */
 async function reconocer(recorte, modo="6") {
   await ocrWorker.setParameters({
     tessedit_pageseg_mode: modo
   });
 
   const resultado = await ocrWorker.recognize(recorte);
+
   return limpiarTextoOCR(resultado.data.text || "");
 }
 
-/* NÚMERO DE SALIDA */
 function extraerNumeroSalida(texto) {
   const limpio = String(texto || "")
     .toUpperCase()
     .replace(/\s+/g, " ")
     .replace(/S A L/g, "SAL");
 
-  const match = limpio.match(/SAL\s*[-:]?\s*(\d{6,})/);
+  const match = limpio.match(
+    /SAL\s*[-:]?\s*(\d{6,})/
+  );
 
   return match ? "SAL" + match[1] : "";
 }
 
-/* DESTINATARIO: NOMBRE, DIRECCIÓN Y LOCALIDAD */
 function extraerDatosDestinatario(texto) {
   const lineas = limpiarTextoOCR(texto)
     .split("\n")
@@ -731,7 +776,11 @@ function extraerDatosDestinatario(texto) {
   for (let i = 1; i < contenido.length; i++) {
     const linea = contenido[i];
 
-    const cpMatch = linea.match(/\b(\d{5})\b/);
+    // España: 5 dígitos.
+    // Portugal: 4 dígitos o formato 4-3.
+    const cpMatch = linea.match(
+      /\b(\d{5}|\d{4}(?:[- ]\d{3})?)\b/
+    );
 
     if (cpMatch) {
       codigoPostal = cpMatch[1];
@@ -741,18 +790,13 @@ function extraerDatosDestinatario(texto) {
         .replace(/[,;]\s*$/, "")
         .trim();
 
-      /* Añadir la siguiente línea si es una continuación geográfica */
-      if (
-        contenido[i + 1] &&
-        !/^(tel|telf|telefono|nif|cif|fax)\b/i.test(contenido[i + 1])
-      ) {
-        const siguiente = contenido[i + 1];
+      const siguiente = contenido[i + 1] || "";
 
-        if (
-          /españa|espana|castell[oó]n|valencia|alicante|madrid|barcelona|gipuzkoa|guipuzcoa|navarra/i.test(siguiente)
-        ) {
-          localidad += " " + siguiente;
-        }
+      if (
+        /\b(portugal|españa|espana|castell[oó]n|valencia|alicante|madrid|barcelona|gipuzkoa|guipuzcoa|navarra)\b/i.test(siguiente) &&
+        !/^(tel|telf|telefono|nif|cif|fax)\b/i.test(siguiente)
+      ) {
+        localidad = (localidad + " " + siguiente).trim();
       }
 
       break;
@@ -763,7 +807,7 @@ function extraerDatosDestinatario(texto) {
 
   return {
     destinatario,
-    direccion:direccionPartes.join(" ").trim(),
+    direccion: direccionPartes.join(" ").trim(),
     codigoPostal,
     localidad
   };
@@ -776,7 +820,6 @@ function limpiarNombre(texto) {
     .trim();
 }
 
-/* PALETS */
 function extraerPalets(texto) {
   const limpio = String(texto || "")
     .toUpperCase()
@@ -796,7 +839,6 @@ function extraerPalets(texto) {
   return "";
 }
 
-/* FECHA DE ENTREGA */
 function extraerFechaEntrega(texto) {
   const limpio = String(texto || "")
     .replace(/\n/g, " ")
@@ -816,14 +858,18 @@ function extraerFechaEntrega(texto) {
         /(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/
       );
 
-      if (mismaLinea) return normalizarFecha(mismaLinea[1]);
+      if (mismaLinea) {
+        return normalizarFecha(mismaLinea[1]);
+      }
 
       if (lineas[i + 1]) {
         const siguiente = lineas[i + 1].match(
           /(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/
         );
 
-        if (siguiente) return normalizarFecha(siguiente[1]);
+        if (siguiente) {
+          return normalizarFecha(siguiente[1]);
+        }
       }
     }
   }
@@ -835,24 +881,158 @@ function normalizarFecha(fecha) {
   return String(fecha).replace(/[.-]/g, "/");
 }
 
-/* TOTALES DE TABLA
-   El OCR puede separar la palabra TOTAL de las cifras.
-   Buscamos la etiqueta y recopilamos también las líneas siguientes.
+/*
+  LECTURA DE TOTALES POR COLUMNAS.
+
+  Localiza la fila "Total" y lee por separado:
+  - La columna de cajas.
+  - La columna de kilos brutos.
+
+  Así se evita mezclar los números de otras columnas.
+*/
+async function extraerTotalesPorColumnas(zonaTabla) {
+  try {
+    const lectura = await ocrWorker.recognize(zonaTabla);
+    const tsv = lectura.data && lectura.data.tsv;
+
+    if (!tsv) {
+      return { cajas:"", kilosBrutos:"" };
+    }
+
+    const filas = tsv.trim()
+      .split(/\r?\n/)
+      .slice(1)
+      .map(linea => linea.split("\t"))
+      .filter(c => c.length >= 12)
+      .map(c => ({
+        texto: (c.slice(11).join(" ") || "").trim(),
+        x: Number(c[6]),
+        y: Number(c[7]),
+        w: Number(c[8]),
+        h: Number(c[9])
+      }));
+
+    const totales = filas.filter(f =>
+      /^t[o0]ta[l1i]\s*[:.]?$/i.test(f.texto) &&
+      f.x < zonaTabla.width * 0.25 &&
+      f.h > 0
+    );
+
+    if (!totales.length) {
+      return { cajas:"", kilosBrutos:"" };
+    }
+
+    const fila = totales[totales.length - 1];
+
+    const y = Math.max(
+      0,
+      Math.round(fila.y - fila.h * 0.6)
+    );
+
+    const h = Math.min(
+      zonaTabla.height - y,
+      Math.round(fila.h * 2.3)
+    );
+
+    if (h < 8) {
+      return { cajas:"", kilosBrutos:"" };
+    }
+
+    async function leerColumna(xInicio, xFin) {
+      const x = Math.round(
+        zonaTabla.width * xInicio
+      );
+
+      const ancho = Math.round(
+        zonaTabla.width * (xFin - xInicio)
+      );
+
+      const recorte = document.createElement("canvas");
+
+      recorte.width = ancho * 2;
+      recorte.height = h * 2;
+
+      const ctx = recorte.getContext("2d");
+      ctx.fillStyle = "white";
+
+      ctx.fillRect(
+        0,
+        0,
+        recorte.width,
+        recorte.height
+      );
+
+      ctx.imageSmoothingEnabled = true;
+
+      ctx.drawImage(
+        zonaTabla,
+        x,
+        y,
+        ancho,
+        h,
+        0,
+        0,
+        recorte.width,
+        recorte.height
+      );
+
+      const texto = await reconocer(recorte, "7");
+      const numeros = extraerNumerosOCR(texto);
+
+      return numeros.length === 1
+        ? limpiarNumeroOCR(numeros[0])
+        : "";
+    }
+
+    const cajas = await leerColumna(0.535, 0.605);
+    const kilosBrutos = await leerColumna(0.785, 0.885);
+
+    return {
+      cajas: /^\d{1,6}$/.test(cajas) ? cajas : "",
+      kilosBrutos:
+        /^\d{1,7}(?:[.,]\d{1,2})?$/.test(kilosBrutos)
+          ? kilosBrutos
+          : ""
+    };
+
+  } catch (error) {
+    console.warn(
+      "Lectura de totales por columnas no disponible:",
+      error
+    );
+
+    return { cajas:"", kilosBrutos:"" };
+  }
+}
+
+/*
+  EXTRACCIÓN ALTERNATIVA DE TOTALES.
+
+  Si la lectura por columnas no encuentra las cifras,
+  se intenta recuperarlas a partir del texto OCR.
 */
 function extraerTotales(...textos) {
   const candidatos = [];
 
   for (const texto of textos) {
     const lineas = limpiarTextoOCR(texto)
-      .split("\n").map(l => l.trim()).filter(Boolean);
+      .split("\n")
+      .map(l => l.trim())
+      .filter(Boolean);
 
     for (let i = 0; i < lineas.length; i++) {
-      const etiqueta = /\bt[o0]ta[l1i]\b/i.test(lineas[i]) ||
-                       /^\s*t[o0]ta[l1i]?\s*$/i.test(lineas[i]);
+      const etiqueta =
+        /\bt[o0]ta[l1i]\b/i.test(lineas[i]) ||
+        /^\s*t[o0]ta[l1i]?\s*$/i.test(lineas[i]);
+
       if (!etiqueta) continue;
 
-      const bloque = lineas.slice(i, Math.min(lineas.length, i + 5)).join(" ");
+      const bloque = lineas
+        .slice(i, Math.min(lineas.length, i + 5))
+        .join(" ");
+
       const numeros = extraerNumerosOCR(bloque);
+
       if (numeros.length >= 2) {
         candidatos.push({
           cajas: numeros[0],
@@ -863,9 +1043,15 @@ function extraerTotales(...textos) {
     }
 
     const plano = lineas.join(" ");
-    const indice = plano.search(/\bt[o0]ta[l1i]\b/i);
+    const indice = plano.search(
+      /\bt[o0]ta[l1i]\b/i
+    );
+
     if (indice >= 0) {
-      const numeros = extraerNumerosOCR(plano.slice(indice, indice + 180));
+      const numeros = extraerNumerosOCR(
+        plano.slice(indice, indice + 180)
+      );
+
       if (numeros.length >= 2) {
         candidatos.push({
           cajas: numeros[0],
@@ -876,8 +1062,14 @@ function extraerTotales(...textos) {
     }
   }
 
-  if (!candidatos.length) return { cajas:"", kilosBrutos:"" };
-  candidatos.sort((a, b) => b.puntuacion - a.puntuacion);
+  if (!candidatos.length) {
+    return { cajas:"", kilosBrutos:"" };
+  }
+
+  candidatos.sort(
+    (a, b) => b.puntuacion - a.puntuacion
+  );
+
   return {
     cajas: limpiarNumeroOCR(candidatos[0].cajas),
     kilosBrutos: limpiarNumeroOCR(candidatos[0].kilosBrutos)
@@ -891,10 +1083,11 @@ function extraerNumerosOCR(texto) {
 }
 
 function limpiarNumeroOCR(valor) {
-  return String(valor || "").replace(/[^\d.,]/g, "").trim();
+  return String(valor || "")
+    .replace(/[^\d.,]/g, "")
+    .trim();
 }
 
-/* BUSCAR PALETS EN OBSERVACIONES */
 function buscarPaletsObservaciones(texto) {
   const limpio = String(texto || "")
     .toUpperCase()
@@ -913,14 +1106,17 @@ function buscarPaletsObservaciones(texto) {
   return "";
 }
 
-/* DETECCIÓN DE PÁGINA INICIAL */
 function esPrimeraPagina(texto) {
   return Boolean(extraerNumeroSalida(texto));
 }
 
-/* PROCESAR PDF */
+/* PROCESAMIENTO PRINCIPAL */
 async function procesarPDF() {
-  if (!selectedFile || !maestroDestinatarios.length || procesando) return;
+  if (
+    !selectedFile ||
+    !maestroDestinatarios.length ||
+    procesando
+  ) return;
 
   procesando = true;
   processBtn.disabled = true;
@@ -930,19 +1126,33 @@ async function procesarPDF() {
   hideMessage();
 
   try {
-    mostrarMensaje("Iniciando lectura del PDF y OCR...", "info");
+    mostrarMensaje(
+      "Iniciando lectura del PDF y OCR...",
+      "info"
+    );
+
     actualizarProgreso(0, "Cargando PDF...");
 
-    const pdfData = new Uint8Array(await selectedFile.arrayBuffer());
-    const pdf = await pdfjsLib.getDocument({ data:pdfData }).promise;
+    const pdfData = new Uint8Array(
+      await selectedFile.arrayBuffer()
+    );
 
-    statusTitle.textContent = "Preparando reconocimiento de texto";
+    const pdf = await pdfjsLib.getDocument({
+      data:pdfData
+    }).promise;
+
+    statusTitle.textContent =
+      "Preparando reconocimiento de texto";
 
     ocrWorker = await Tesseract.createWorker("spa");
 
     let albaranActual = null;
 
-    for (let numeroPagina = 1; numeroPagina <= pdf.numPages; numeroPagina++) {
+    for (
+      let numeroPagina = 1;
+      numeroPagina <= pdf.numPages;
+      numeroPagina++
+    ) {
       actualizarProgreso(
         ((numeroPagina - 1) / pdf.numPages) * 100,
         `Analizando página ${numeroPagina} de ${pdf.numPages}...`
@@ -964,65 +1174,102 @@ async function procesarPDF() {
         viewport:viewport
       }).promise;
 
-      /*
-       * LECTURA AMPLIA DE CABECERA:
-       * número de salida, orden de carga y posible fecha.
-       */
       const zonaCabecera = crearRecorte(
-        canvas, 0.035, 0.235, 0.94, 0.17
+        canvas,
+        0.035,
+        0.235,
+        0.94,
+        0.17
       );
 
-      const textoCabecera = await reconocer(zonaCabecera, "6");
+      const textoCabecera = await reconocer(
+        zonaCabecera,
+        "6"
+      );
 
-      const numeroSalida = extraerNumeroSalida(textoCabecera);
+      const numeroSalida =
+        extraerNumeroSalida(textoCabecera);
 
-      /*
-       * DESTINATARIO:
-       * bloque derecho, incluyendo nombre, dirección y CP.
-       */
       const zonaDestinatario = crearRecorte(
-        canvas, 0.54, 0.135, 0.445, 0.17
+        canvas,
+        0.54,
+        0.135,
+        0.445,
+        0.17
       );
 
-      const textoDestinatario = await reconocer(zonaDestinatario, "6");
+      const textoDestinatario = await reconocer(
+        zonaDestinatario,
+        "6"
+      );
 
       /*
-       * TABLA:
-       * leer una zona grande para encontrar Total
-       * aunque la tabla termine a distinta altura.
-       */
+        Zona amplia: permite encontrar la fila
+        Total en tablas de diferentes alturas.
+      */
       const zonaTabla = crearRecorte(
-        canvas, 0.035, 0.35, 0.93, 0.57
+        canvas,
+        0.035,
+        0.35,
+        0.93,
+        0.57
       );
 
-      const textoTabla = await reconocer(zonaTabla, "6");
+      const textoTabla = await reconocer(
+        zonaTabla,
+        "6"
+      );
 
-      /*
-       * SEGUNDA LECTURA DE LA ZONA INFERIOR DE LA TABLA:
-       * probamos dos modos porque la fila Total puede estar fragmentada.
-       */
       const zonaTotales = crearRecorte(
-        canvas, 0.035, 0.62, 0.93, 0.31
+        canvas,
+        0.035,
+        0.35,
+        0.93,
+        0.32
       );
-      const textoTotales = await reconocer(zonaTotales, "6");
-      const textoTotalesAlternativo = await reconocer(zonaTotales, "11");
 
-      /*
-       * Si es una nueva salida, crear registro.
-       */
+      const textoTotales = await reconocer(
+        zonaTotales,
+        "6"
+      );
+
+      const textoTotalesAlternativo =
+        await reconocer(zonaTotales, "11");
+
+      const totalesColumnas =
+        await extraerTotalesPorColumnas(zonaTabla);
+
+      const totalesOCR = extraerTotales(
+        textoTotales,
+        textoTotalesAlternativo,
+        textoTabla
+      );
+
+      const totalesPagina = {
+        cajas:
+          totalesColumnas.cajas ||
+          totalesOCR.cajas,
+
+        kilosBrutos:
+          totalesColumnas.kilosBrutos ||
+          totalesOCR.kilosBrutos
+      };
+
       if (numeroSalida) {
         const datosDestinatario =
           extraerDatosDestinatario(textoDestinatario);
 
-        const totales = extraerTotales(textoTabla, textoTotales, textoTotalesAlternativo);
+        const totales = totalesPagina;
 
         let palets = extraerPalets(textoCabecera);
 
         if (!palets) {
-          palets = buscarPaletsObservaciones(textoTabla);
+          palets = buscarPaletsObservaciones(
+            textoTabla
+          );
         }
 
-        albaranActual = {
+        let albaranActualNuevo = {
           destinatario:datosDestinatario.destinatario,
           direccion:datosDestinatario.direccion,
           codigoPostal:datosDestinatario.codigoPostal,
@@ -1040,31 +1287,40 @@ async function procesarPDF() {
         );
 
         if (!existente) {
-          resultados.push(albaranActual);
+          resultados.push(albaranActualNuevo);
+          albaranActual = albaranActualNuevo;
         } else {
           albaranActual = existente;
         }
-      }
 
-      /*
-       * Si es continuación de un albarán anterior,
-       * aprovechar la tabla de esa página para completar
-       * los totales que falten.
-       */
-      else if (albaranActual) {
-        const totales = extraerTotales(textoTabla, textoTotales, textoTotalesAlternativo);
-
-        if (!albaranActual.cajas && totales.cajas) {
-          albaranActual.cajas = totales.cajas;
+      } else if (albaranActual) {
+        /*
+          Si es continuación de un albarán anterior,
+          completar los datos que falten.
+        */
+        if (
+          !albaranActual.cajas &&
+          totalesPagina.cajas
+        ) {
+          albaranActual.cajas =
+            totalesPagina.cajas;
         }
 
-        if (!albaranActual.kilosBrutos && totales.kilosBrutos) {
-          albaranActual.kilosBrutos = totales.kilosBrutos;
+        if (
+          !albaranActual.kilosBrutos &&
+          totalesPagina.kilosBrutos
+        ) {
+          albaranActual.kilosBrutos =
+            totalesPagina.kilosBrutos;
         }
 
         if (!albaranActual.palets) {
-          const palets = buscarPaletsObservaciones(textoTabla);
-          if (palets) albaranActual.palets = palets;
+          const palets =
+            buscarPaletsObservaciones(textoTabla);
+
+          if (palets) {
+            albaranActual.palets = palets;
+          }
         }
       }
 
@@ -1083,15 +1339,26 @@ async function procesarPDF() {
       );
     }
 
-    // La vinculación se realiza después del OCR para no alterar la extracción original.
     vincularDestinatarios();
     renderizarResultados();
 
-    const exactas = resultados.filter(r => r.estadoVinculacion === "EXACTA").length;
-    const aproximadas = resultados.filter(r => r.estadoVinculacion === "APROXIMADA").length;
-    const sinCoincidencia = resultados.filter(r => r.estadoVinculacion === "SIN COINCIDENCIA").length;
+    const exactas = resultados.filter(
+      r => r.estadoVinculacion === "EXACTA"
+    ).length;
 
-    actualizarProgreso(100, "Extracción y vinculación finalizadas.");
+    const aproximadas = resultados.filter(
+      r => r.estadoVinculacion === "APROXIMADA"
+    ).length;
+
+    const sinCoincidencia = resultados.filter(
+      r => r.estadoVinculacion === "SIN COINCIDENCIA"
+    ).length;
+
+    actualizarProgreso(
+      100,
+      "Extracción y vinculación finalizadas."
+    );
+
     statusTitle.textContent = "Proceso finalizado";
 
     mostrarMensaje(
@@ -1105,12 +1372,16 @@ async function procesarPDF() {
     console.error("Error Inlet Albaranes:", error);
 
     if (ocrWorker) {
-      try { await ocrWorker.terminate(); } catch(e) {}
+      try {
+        await ocrWorker.terminate();
+      } catch(e) {}
+
       ocrWorker = null;
     }
 
     mostrarMensaje(
-      "No se ha podido completar el procesamiento: " + error.message,
+      "No se ha podido completar el procesamiento: " +
+      error.message,
       "error"
     );
 
@@ -1120,7 +1391,6 @@ async function procesarPDF() {
   }
 }
 
-/* ESTADO */
 function estaCompleto(r) {
   return Boolean(
     r.destinatario &&
@@ -1134,7 +1404,7 @@ function estaCompleto(r) {
   );
 }
 
-/* TABLA EDITABLE Y VINCULACIÓN MANUAL */
+/* TABLA EDITABLE */
 function renderizarResultados() {
   let html = `
     <div class="table-wrap">
@@ -1163,10 +1433,16 @@ function renderizarResultados() {
 
   resultados.forEach((r, index) => {
     const completo = estaCompleto(r);
-    const estado = r.estadoVinculacion || "SIN COINCIDENCIA";
-    const claseEstado = estado === "EXACTA" ? "exact"
-      : estado === "APROXIMADA" ? "fuzzy"
-      : estado === "MANUAL" ? "manual" : "none";
+    const estado =
+      r.estadoVinculacion || "SIN COINCIDENCIA";
+
+    const claseEstado = estado === "EXACTA"
+      ? "exact"
+      : estado === "APROXIMADA"
+        ? "fuzzy"
+        : estado === "MANUAL"
+          ? "manual"
+          : "none";
 
     const opcionesMaestro = [
       `<option value="">-- Sin asignar --</option>`,
@@ -1199,69 +1475,126 @@ function renderizarResultados() {
   html += `</tbody></table></div>`;
   resultsContainer.innerHTML = html;
 
-  resultsContainer.querySelectorAll("input[data-index]").forEach(input => {
-    input.addEventListener("input", event => {
-      const index = Number(event.target.dataset.index);
-      const field = event.target.dataset.field;
-      resultados[index][field] = event.target.value;
-
-      const fila = event.target.closest("tr");
-      const completo = estaCompleto(resultados[index]);
-      fila.classList.toggle("complete", completo);
-      fila.classList.toggle("review", !completo);
-      fila.lastElementChild.textContent = completo ? "Completo" : "Revisar";
-      actualizarResumen();
-    });
-  });
-
-  resultsContainer.querySelectorAll("select[data-match-index]").forEach(select => {
-    select.addEventListener("change", event => {
-      const index = Number(event.target.dataset.matchIndex);
-      const valor = event.target.value;
-
-      if (valor === "") {
-        aplicarCoincidencia(resultados[index], null);
-      } else {
-        aplicarCoincidencia(
-          resultados[index],
-          { indice:Number(valor), candidato:maestroDestinatarios[Number(valor)], similitudNombre:1 },
-          true
+  resultsContainer
+    .querySelectorAll("input[data-index]")
+    .forEach(input => {
+      input.addEventListener("input", event => {
+        const index = Number(
+          event.target.dataset.index
         );
-      }
-      renderizarResultados();
+
+        const field =
+          event.target.dataset.field;
+
+        resultados[index][field] =
+          event.target.value;
+
+        const fila =
+          event.target.closest("tr");
+
+        const completo =
+          estaCompleto(resultados[index]);
+
+        fila.classList.toggle(
+          "complete",
+          completo
+        );
+
+        fila.classList.toggle(
+          "review",
+          !completo
+        );
+
+        fila.lastElementChild.textContent =
+          completo ? "Completo" : "Revisar";
+
+        actualizarResumen();
+      });
     });
-  });
+
+  resultsContainer
+    .querySelectorAll("select[data-match-index]")
+    .forEach(select => {
+      select.addEventListener("change", event => {
+        const index = Number(
+          event.target.dataset.matchIndex
+        );
+
+        const valor = event.target.value;
+
+        if (valor === "") {
+          aplicarCoincidencia(
+            resultados[index],
+            null
+          );
+        } else {
+          aplicarCoincidencia(
+            resultados[index],
+            {
+              indice:Number(valor),
+              candidato:
+                maestroDestinatarios[Number(valor)],
+              similitudNombre:1
+            },
+            true
+          );
+        }
+
+        renderizarResultados();
+      });
+    });
 
   actualizarResumen();
-  document.getElementById("legend").style.display = "flex";
-  document.getElementById("summary").style.display = "flex";
+
+  document.getElementById("legend").style.display =
+    "flex";
+
+  document.getElementById("summary").style.display =
+    "flex";
 }
 
-/* RESUMEN */
 function actualizarResumen() {
-  const completos = resultados.filter(estaCompleto).length;
-  const revisar = resultados.length - completos;
+  const completos =
+    resultados.filter(estaCompleto).length;
 
-  document.getElementById("totalAlbaranes").textContent =
-    resultados.length;
+  const revisar =
+    resultados.length - completos;
 
-  document.getElementById("completeCount").textContent =
-    completos;
+  document.getElementById(
+    "totalAlbaranes"
+  ).textContent = resultados.length;
 
-  document.getElementById("reviewCount").textContent =
-    revisar;
+  document.getElementById(
+    "completeCount"
+  ).textContent = completos;
 
-  document.getElementById("exactCount").textContent =
-    resultados.filter(r => r.estadoVinculacion === "EXACTA").length;
+  document.getElementById(
+    "reviewCount"
+  ).textContent = revisar;
 
-  document.getElementById("fuzzyCount").textContent =
-    resultados.filter(r => r.estadoVinculacion === "APROXIMADA").length;
+  document.getElementById(
+    "exactCount"
+  ).textContent = resultados.filter(
+    r => r.estadoVinculacion === "EXACTA"
+  ).length;
 
-  document.getElementById("noMatchCount").textContent =
-    resultados.filter(r => r.estadoVinculacion === "SIN COINCIDENCIA").length;
+  document.getElementById(
+    "fuzzyCount"
+  ).textContent = resultados.filter(
+    r => r.estadoVinculacion === "APROXIMADA"
+  ).length;
 
-  document.getElementById("manualCount").textContent =
-    resultados.filter(r => r.estadoVinculacion === "MANUAL").length;
+  document.getElementById(
+    "noMatchCount"
+  ).textContent = resultados.filter(
+    r => r.estadoVinculacion === "SIN COINCIDENCIA"
+  ).length;
+
+  document.getElementById(
+    "manualCount"
+  ).textContent = resultados.filter(
+    r => r.estadoVinculacion === "MANUAL"
+  ).length;
 }
 
 /* EXPORTAR EXCEL */
@@ -1282,7 +1615,10 @@ function exportarExcel() {
     "Población maestro":r.poblacionMaestro,
     "TIERS":r.tiers,
     "Estado vinculación":r.estadoVinculacion,
-    "Similitud destinatario":r.similitud ? Math.round(r.similitud * 100) + "%" : ""
+    "Similitud destinatario":
+      r.similitud
+        ? Math.round(r.similitud * 100) + "%"
+        : ""
   }));
 
   const worksheet = XLSX.utils.json_to_sheet(filas);
@@ -1312,7 +1648,9 @@ function exportarExcel() {
     "Inlet Albaranes"
   );
 
-  const fecha = new Date().toISOString().slice(0, 10);
+  const fecha = new Date()
+    .toISOString()
+    .slice(0, 10);
 
   XLSX.writeFile(
     workbook,
@@ -1331,8 +1669,12 @@ function limpiar() {
 
   pdfInput.value = "";
   masterInput.value = "";
-  fileName.textContent = "Ningún PDF seleccionado";
-  masterFileName.textContent = "Ningún maestro seleccionado";
+
+  fileName.textContent =
+    "Ningún PDF seleccionado";
+
+  masterFileName.textContent =
+    "Ningún maestro seleccionado";
 
   processBtn.disabled = true;
   selectMasterBtn.disabled = false;
@@ -1341,8 +1683,11 @@ function limpiar() {
   resultsContainer.innerHTML = "";
   statusBox.style.display = "none";
 
-  document.getElementById("summary").style.display = "none";
-  document.getElementById("legend").style.display = "none";
+  document.getElementById("summary").style.display =
+    "none";
+
+  document.getElementById("legend").style.display =
+    "none";
 
   hideMessage();
 }
